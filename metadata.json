@@ -1,0 +1,6 @@
+{
+  "name": "Glico Almond Koka - Hành Trình Sống Thanh Xuân",
+  "description": "Ứng dụng tương tác sự kiện Glico Almond Koka: Minigame Hứng Giọt Sữa Dinh Dưỡng, Ghép Đôi Thực Phẩm Vitamin E và Vòng Quay May Mắn 100% trúng quà.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

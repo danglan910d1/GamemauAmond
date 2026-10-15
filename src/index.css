@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom, 12px), 12px);
+  }
+  .pt-safe {
+    padding-top: max(env(safe-area-inset-top, 12px), 12px);
+  }
+  .clip-pointer {
+    clip-path: polygon(50% 100%, 0% 18%, 22% 0%, 78% 0%, 100% 18%);
+  }
+}
+
+@keyframes dropPulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 2px 5px rgba(217, 119, 6, 0.35));
+  }
+  50% {
+    transform: scale(1.1);
+    filter: drop-shadow(0 4px 10px rgba(217, 119, 6, 0.6));
+  }
+}
+
+.drop-glow {
+  animation: dropPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes milkWave {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-12px);
+  }
+}
+
+.milk-surface-wave {
+  animation: milkWave 2.4s ease-in-out infinite;
+}
+
+@keyframes shake-error {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20%, 60% {
+    transform: translateX(-6px);
+  }
+  40%, 80% {
+    transform: translateX(6px);
+  }
+}
+
+.animate-shake {
+  animation: shake-error 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.5;
+  }
+}
+
+.animate-pulseGlow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* Hide scrollbar for smooth mobile look */
+::-webkit-scrollbar {
+  display: none;
+}
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

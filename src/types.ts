@@ -8,6 +8,9 @@ export interface ProductItem {
   image: string;
   volume: string;
   highlights: string[];
+  badgeBg?: string;
+  badgeIcon?: string;
+  badgeText?: string;
 }
 
 export interface MatchPair {
@@ -39,54 +42,126 @@ export interface PrizeItem {
   stickCol?: string;
 }
 
-// Public Google CDN images matching prompt HTML
+export interface DropItem {
+  id: number;
+  x: number;
+  y: number;
+  speed: number;
+  isHazard: boolean;
+  size: number;
+  /** Chỉ số sprite: huy hiệu dinh dưỡng (0-2) hoặc chướng ngại vật (0-2) */
+  variant: number;
+  /** Góc xoay nhẹ khi rơi (deg) */
+  rotation: number;
+}
+
+export interface SplashEffect {
+  id: number;
+  x: number;
+  y: number;
+  text: string;
+}
+
+import { LOCAL_ASSETS } from './assets/images';
+
+
+// Local Assets - 100% Offline & Vercel Build Ready (No external CDN dependencies)
 export const ASSETS = {
-  treeBackground: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAsD9m0_aY5MNxDvyKG0vp6ljQHr4Tq6TRc5b465c6t55DD2xrdz_ij-61J5oJXvTSoFSUFJHrE1DHtJIXyWHcWupI3biybJ2yrYViGnYGEHZIoM-VikRVoO2hpJeNDbH8BdbynVtHRIH1NS87QqeiI53DP6T5ciHIqtsC_fQZbgsCBBkiM9LlA4-ZVh5V2kA0HzWYxWgNN9JAWSPtAfvpcEceuRvcrJC6uGzcWteVAWZywhDHGh_YLWkKdN7D_GVQgHw',
-  almondKokaBoxTransparent: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAiG080HFgt3CsowGcJ3LWnc9NX42SyXloEQYGUvxC8W8enTbNOFmruyx0JEGWu76msJgbSCB9T7ICUyykv_pezzlwh-3_56ngsSmvbFNPGLKvBOoIht5u6uxaL5RQyTmf664-RUrHC4kC4Gu6akoua_pyPrzEI9N4X8GoW7_4WMx_Y-7h6-IthZtPiww22reiYzcxmUXbt9pQpT39vp2AqVOqMSwpf1rbyG6JSXXE43WrnS0BazR303lleMPjaRGbjN3I',
-  almondKokaUnsweetened: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBrTWJhbEtvGVw97rVxWQV275hpA1TT_zewcD-FWiaYGz6muTDZowNg0lz0MV9nd0Sus8rDtkx4-duCv4P40XmTEeHQWiz1ETrT1vmAC5S_pcvS8lLzbEWjr2ZA8vUwgijCCM0zRcoSkhffsTOFducBP2jBal6uaBZOAO-QN2CBrbEikmUmZGENGpTAsZVOFNOeXm937e46P-dAnXSizOIHVq5GXvSfIPQDbWcbZ47dNzuT4ME45ZzfIudjztM7yLfwFMA',
-  almondKokaOriginal: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDZXXwBKelCk23xiu7QB1HiUPzMEiVHXxCwk0c1v03RmMigVI-8W0rAUoiszGb64aQ4r-0a-md_8JcuVnwes1Cupg8BnO4tBtWOkn4CqGIrBF6yiotcIAV3tfLy89_jQDu97deU7u8YfMkjdiIsQX1vNyNLNmEqJklDffpz_w9ZWelLGEzY2VY4Ze-Or_v5IGJZArd6ScNBmTS1vA-wG_5InJoRb_ca0pXifE1A99-AsaeE1y2174bV_Jwi0ZrMYjHp1VA',
-  almondKokaPackSmall: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAjEvayo1dr9OqgPInSU1ezvpTfExipagb6f0axdl8lve649-sZatZLoaPkyK4_0q4EZP6cF2wg31Lbh7785iFjJlxYfxiU6g_3OExQgR8yZNyr88L_HFZFPI8oiirOXg3mEmOv2tpXeYnaoBGotcjnr5SafxhPIs4X4zkyZaJ4RXe2CZncas5QKMBJinhMvUytfhsEEsqHgmkc_MNw1jhBtS88BgpY-Vnq5rBHPBryfRoF-LKAKuAPng',
-  no1JapanEmblem: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBLVcP7MJbuPAorvb85FBXTOH9_AQK4_tCGBONXiGVvBSjE5AVAoL4DZx7wussCW5Z2Vo_gaVKLX7airl3HjnPOdh7-4aMtMG84tL4IVAxva0ZMzBcBYuK3ZpB5ST7OOAn006W-DndHi4GxJ2WTRqVqjD6OoiPh0DIMxjXamoTrniMdsrhnVZf38cr7Rq3InJhtcNTVMrkxrfwLRI48035OUnd9VJfnghvVuIAiqtJFybqiOEw47PNEGAVjLNMQBSlpRpE',
-  almondNutHeader: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCs_8PQUVZIlT-BA2npmzBiFcvC5x6KYX-p8Fpo7oJtWahLLbtPYeb5ltrIwupNVhvz4qoHVs_fCPe5zS1Yv7NfBgAyY11jucFNY9gcstywy9wW-BqHmYrnBrqyjcJ4QSNqwl9iaajmD7g6yMF-ig-Eje9CBDM7nSTMlMlVFveWFgKEkmRBBSn4ThbOyAufkzXulCmlbQnNkDGO02mbdPwPrBWnqdXMFYfvtG4DSFK8Q9qEcEIry4jXrPOxGk2mMqoK-5U',
-  glicoLogoRed: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC1uyaAxC2KLDuWOkIyJAm7MWZ2Z_dMaNU2hkjUUd-dKdEyRi9NeGqMCoLc6JmkqN1iNCam2TQv-nyvZtUJUyBTslROOFszaVZIwy9LjfW7tzXCwZClf_W_b5MA-GWAkstSkgbt6OpeUco32Rfe0-UGoZ5rH3gbV9fHCZr6GdfPNZdmwbKAIXOTHIqPK_0ul3kA6QDTEdpGioFK5VDlSzwJ_H90SEVUCox49ZBySTdKcFD-0Cg-dMwWUg',
-  glicoLogoSmall: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBzbHv-Dud_Man8rb2Wlb3Lpm3x51L7sE97FC1tNwNwCSJYn7S8O6xmNg2d_0nHwxSykG4WcULUg-zDAzhzvAruKw19ZU0W1JuPv_qB4Nj4G2D1k5YGxND4eiFgUGwqog83mdy_0yPUflCjd7v5zPh-M_Jy_5Zmo8CeQ-jcwhuZvlJVj3B69yGsqPJ_tZe_IJ6gXy2GsDDQi7G2nHYWmsjLzBZVDrZxgwKv5KizQXu7UV5qRm8cEEZg9Q',
+  treeBackground: LOCAL_ASSETS.backgrounds.treeBackground,
+  wheelBg: LOCAL_ASSETS.backgrounds.wheelBg,
+  game1BgCard: LOCAL_ASSETS.backgrounds.game1BgCard,
+  game2BgCard: LOCAL_ASSETS.backgrounds.game2BgCard,
+  lyHungSua: LOCAL_ASSETS.gameItems.lyHungSua,
+  obstacleSoybean: LOCAL_ASSETS.gameItems.obstacleSoybean,
+  obstacleHighCholesterol: LOCAL_ASSETS.gameItems.obstacleHighCholesterol,
+  obstacleAnimalMilk: LOCAL_ASSETS.gameItems.obstacleAnimalMilk,
+  almondKokaBoxTransparent: LOCAL_ASSETS.products.original180ml,
+  almondKokaUnsweetened: LOCAL_ASSETS.products.unsweetened180ml,
+  almondKokaOriginal: LOCAL_ASSETS.products.original180ml,
+  almondKokaUnsweetened1L: LOCAL_ASSETS.products.unsweetened1L,
+  almondKokaOriginal1L: LOCAL_ASSETS.products.original1L,
+  almondKokaPackSmall: LOCAL_ASSETS.products.original180ml,
+  no1JapanEmblem: LOCAL_ASSETS.branding.no1JapanEmblem,
+  almondNutHeader: LOCAL_ASSETS.branding.almondNutHeader,
+  almondKokaLogo: LOCAL_ASSETS.branding.almondKokaLogo,
+  glicoLogoRed: LOCAL_ASSETS.branding.glicoLogoRed,
+  glicoLogoSmall: LOCAL_ASSETS.branding.glicoLogoSmall,
   // Food items for round 2
-  foodSweetPotato: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDjSHZRZRBiNTZ0htepcPdLsl8UENTDKGZL0jKGCuRFQn23G3EsR_WkzccscwCPMMhqq-UwycilYtR-5lOzf4HfLv_OQj3LQnYz3Sak9MIisuJwZ9oPJV5D0XYCfcTZbx1QHdUKCXOJrdt6gfmPHww2VQp7o02TVNwYW0PRzwaMWI3AkegXM30ThoyMJricawvNjXTOCeF7yjLVoK_ALtNxUzarbosbRB378r4o1f2qY83v8-1S_h66pA',
-  foodAvocado: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC8RCl14AfqCREIlvLyF3ERhuB78PhN6iwHuU-FwMkXywiv-1cVIBv4JQlmgJjJxPcxdX6mgqoZF4g1-6O7g9UIPqtZUVAMllCd3eT_AKebSsCtKq3UtP5pDlkigmBQL4MEg6Sf8l2RRkui0kZRGitmjTKrkkM__GmSHvCFE6LssFVmz8T6c41JIVGdG7PLGBqgXcb8elqpsbORRSGv7MTE9ZKtglbuPGjaUPF6MJmj',
-  foodSpinach: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCsTKbXsjlkzrc21Q4ZklzknRtq1t4jvWBd1cPcQ0MX-J1FsGMCJCpitfBC7B7AUMLBehfe_ae2rPmbFc70Fk-pYrKOhA0_0iJmJPigoeR_5MKqB1BrzzSJlEWA2ecZt6KxCFQpxPsexGTs-NZ7TFZLpY9AHdUAtHa4T0WaxAI9PAHqQW_s34yp1YNKhANXv0yBR2cUL3NtVCSO3F5F3BRxTHW4tgY7Ic6J5l1xRz7E',
-  foodStrawberries: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCH8e-HihV7YCrrC7iYw0q3JWjYzIzBPjdPGMnLX5pWTfUXKk8muSJ3qUOrPwhc9pmXnMn2VVi1sHrNdBdQbO0pWAKI2wwUTSGBs97srVMtVDfmVHPR6RPTp7MCJelLcnjyUfmhnTN1n7-ufH_xMwYFjeWMNxTUUSQedjrdYO5cBK5okXI5H_ePLinixVF7u91bjGkCqY9SOXPC46kIZI2AyjG0h_1Zndwbl34dW4vG',
-  servingAlmondPack: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDbbCA2jMQ0XjiFvrDWwJDQcNx7NzbFtAefs3MEsmoraULXWa_Q_Hzcbl6KHUf21q4dR_3k2EIbKbF9COkZJjWbj6Iu0T79JQaDSWStgH24G6cRyKueQmFyb4fL_eumSMfC65d5B1fxPSU4J6iHy0oWpL0MJZMjoGfIuXs-qrYcziv23XqqOwI7-NI7M2SdOmdQCMP_o1erXj8XMTCtZkk-BF2_bGMYx-t-PMOlrqlyB57bgWgxKNVXPA',
-  almondBadgeRound: 'https://lh3.googleusercontent.com/aida-public/AB6AXuByc1XFVI1AU92YklejvnDUTZf6bRrnQsv7HdRlJUnC2EYHSrc3fo8NMTw1gsbFXsGiokh-XmwQajDsK2hqv5b_po0jDmTaufY8_pDFcOAV4--SloW4NJeMHLU39pMYDbRciQLWcmQmgBjV--13D3N_PwgzZwxPDHiaISLmxfqKk5QhkBDuq-eagCcQYGK-pPvCQPWAFZpKMASG_7Wkgel16K-vr8hXeNfgNBNaajvmbkESMh1G5lHn0rjOsmyKUcQEfVA'
+  foodSweetPotato: LOCAL_ASSETS.gameItems.sweetPotato,
+  foodAvocado: LOCAL_ASSETS.gameItems.avocado,
+  foodSpinach: LOCAL_ASSETS.gameItems.spinach,
+  foodStrawberries: LOCAL_ASSETS.gameItems.strawberry,
+  servingAlmondPack: LOCAL_ASSETS.gameItems.servingAlmondPack,
+  almondBadgeRound: LOCAL_ASSETS.gameItems.almondBadgeRound,
+  // Icons
+  iconVitaminE: LOCAL_ASSETS.icons.vitaminE,
+  iconZeroCholesterol: LOCAL_ASSETS.icons.zeroCholesterol,
+  iconRichFiber: LOCAL_ASSETS.icons.richFiber,
 };
 
+// Bộ 4 SKU sản phẩm chính Almond Koka (Đúng chuẩn thứ tự & màu sắc badge)
 export const PRODUCT_CAROUSEL: ProductItem[] = [
   {
-    id: 'unsweetened',
-    name: 'Vị Không Đường (Unsweetened)',
-    subName: 'Almond Koka Unsweetened',
-    badge: 'Ít Calo - Chuẩn Dáng',
-    image: ASSETS.almondKokaUnsweetened,
-    volume: '180ml',
-    highlights: ['100% Vitamin E tự nhiên', '0% Đường bổ sung', 'Giàu chất xơ thực vật']
-  },
-  {
-    id: 'original',
-    name: 'Vị Truyền Thống (Original)',
-    subName: 'Almond Koka Original',
+    id: 'sku_1_ori_180',
+    name: '180ml • Vị Nguyên Bản (Original)',
+    subName: 'Almond Koka Original 180ml',
     badge: 'Bán Chạy Số 1 Nhật Bản',
-    image: ASSETS.almondKokaOriginal,
+    badgeText: '180ml • Vị Nguyên Bản (Original)',
+    badgeBg: 'bg-[#0284c7]', // Màu xanh dương
+    badgeIcon: 'eco',
+    image: LOCAL_ASSETS.products.original180ml,
     volume: '180ml',
     highlights: ['Thơm béo hạt hạnh nhân', 'Không Cholesterol', 'Không chứa Lactose']
   },
   {
-    id: 'chocolate',
-    name: 'Vị Sô-cô-la (Chocolate)',
-    subName: 'Almond Koka Chocolate',
-    badge: 'Đậm Vị Cacao Hảo Hạng',
-    image: ASSETS.almondKokaBoxTransparent,
+    id: 'sku_2_unsweet_180',
+    name: '180ml • Vị Không Đường (Unsweetened)',
+    subName: 'Almond Koka Unsweetened 180ml',
+    badge: 'Ít Calo - Chuẩn Dáng',
+    badgeText: '180ml • Vị Không Đường (Unsweetened)',
+    badgeBg: 'bg-[#0d9488]', // Màu xanh ngọc
+    badgeIcon: 'eco',
+    image: LOCAL_ASSETS.products.unsweetened180ml,
     volume: '180ml',
-    highlights: ['Hòa quyện cacao Bỉ', 'Bổ sung khoáng chất', 'Vị ngon cả nhà đều yêu']
+    highlights: ['100% Vitamin E tự nhiên', '0% Đường bổ sung', 'Giàu chất xơ thực vật']
+  },
+  {
+    id: 'sku_3_ori_1l',
+    name: '1L • Vị Nguyên Bản (Original)',
+    subName: 'Almond Koka Original 1000ml',
+    badge: 'Family Pack 1000ml',
+    badgeText: '1L • Vị Nguyên Bản (Original)',
+    badgeBg: 'bg-[#0284c7]', // Màu xanh dương + Icon gia đình
+    badgeIcon: 'family_restroom',
+    image: LOCAL_ASSETS.products.original1L,
+    volume: '1 Lít',
+    highlights: ['Hương vị thơm béo tự nhiên', 'Dinh dưỡng trọn vẹn gia đình', '100% Hạt hạnh nhân California']
+  },
+  {
+    id: 'sku_4_unsweet_1l',
+    name: '1L • Vị Không Đường (Unsweetened)',
+    subName: 'Almond Koka Unsweetened 1000ml',
+    badge: 'Family Pack 1000ml',
+    badgeText: '1L • Vị Không Đường (Unsweetened)',
+    badgeBg: 'bg-[#0d9488]', // Màu xanh ngọc + Icon gia đình
+    badgeIcon: 'family_restroom',
+    image: LOCAL_ASSETS.products.unsweetened1L,
+    volume: '1 Lít',
+    highlights: ['0% Đường bổ sung', 'Bổ sung Vitamin E dồi dào', 'Phù hợp pha chế & làm bánh']
   }
+];
+
+export interface StoreInfo {
+  id: string;
+  region: 'HCM' | 'HN';
+  name: string;
+}
+
+export const DEFAULT_STORES: StoreInfo[] = [
+  // TP. Hồ Chí Minh
+  { id: 'STORE_HCM_01', region: 'HCM', name: 'Mê Linh Point' },
+  // Hà Nội
+  { id: 'STORE_HN_01', region: 'HN', name: 'Lancaster' },
 ];
 
 export const MATCH_DATA: MatchPair[] = [
@@ -95,9 +170,9 @@ export const MATCH_DATA: MatchPair[] = [
     leftTitle: 'Khoai lang',
     leftSubtitle: 'Giàu Vitamin E',
     leftImage: ASSETS.foodSweetPotato,
-    rightTitle: '1.2 củ',
+    rightTitle: '1.2',
     rightSubtitle: 'Khẩu phần tương đương',
-    rightImage: ASSETS.servingAlmondPack,
+    rightIcon: 'restaurant',
     factTitle: 'Khoai lang & Vitamin E',
     factText: 'Trong 100g khoai lang nấu chín (giữ nguyên vỏ) chỉ chứa khoảng 0.24 mg Vitamin E. Bạn cần ăn tới 1.2 củ khoai lang lớn mỗi ngày!'
   },
@@ -106,9 +181,9 @@ export const MATCH_DATA: MatchPair[] = [
     leftTitle: 'Quả Bơ Tươi',
     leftSubtitle: 'Chất béo tốt',
     leftImage: ASSETS.foodAvocado,
-    rightTitle: '3.7 quả',
+    rightTitle: '3.7',
     rightSubtitle: 'Khẩu phần tương đương',
-    rightIcon: 'nutrition',
+    rightIcon: 'restaurant',
     factTitle: 'Quả Bơ Tươi & Sức Khỏe',
     factText: 'Bơ chứa chất béo không bão hòa đơn lành mạnh, nhưng bạn cần ăn đến 3.7 quả bơ chín mỗi ngày để đạt 100% nhu cầu Vitamin E!'
   },
@@ -117,9 +192,9 @@ export const MATCH_DATA: MatchPair[] = [
     leftTitle: 'Cải bó xôi',
     leftSubtitle: 'Chống oxy hoá',
     leftImage: ASSETS.foodSpinach,
-    rightTitle: '9 cành',
+    rightTitle: '9',
     rightSubtitle: 'Khẩu phần tương đương',
-    rightIcon: 'eco',
+    rightIcon: 'restaurant',
     factTitle: 'Cải bó xôi (Rau bina)',
     factText: 'Cải bó xôi giàu dưỡng chất xanh, bạn cần dùng 9 cành lớn (~500g rau tươi) mỗi ngày mới đáp ứng đủ lượng Vitamin E bằng 1 ly Almond Koka!'
   },
@@ -128,11 +203,22 @@ export const MATCH_DATA: MatchPair[] = [
     leftTitle: 'Dâu tây',
     leftSubtitle: 'Khoáng chất cao',
     leftImage: ASSETS.foodStrawberries,
-    rightTitle: '1.8kg',
+    rightTitle: '1.8',
     rightSubtitle: 'Khẩu phần tương đương',
-    rightIcon: 'grain',
+    rightIcon: 'restaurant',
     factTitle: 'Dâu tây thơm ngon',
     factText: 'Dâu tây dồi dào vitamin C nhưng hàm lượng Vitamin E rất khiêm tốn: bạn phải ăn đến 1.8kg dâu tươi mới đủ nhu cầu chuẩn mỗi ngày!'
+  },
+  {
+    id: 'almond_koka',
+    leftTitle: 'Sữa Almond Koka 180ml',
+    leftSubtitle: '100% Vitamin E',
+    leftImage: ASSETS.almondKokaOriginal,
+    rightTitle: '1',
+    rightSubtitle: 'Khẩu phần tương đương',
+    rightIcon: 'restaurant',
+    factTitle: 'Sữa Almond Koka 180ml',
+    factText: 'Chỉ 1 hộp Almond Koka 180ml đáp ứng trọn vẹn 100% nhu cầu Vitamin E tự nhiên mỗi ngày!'
   }
 ];
 
@@ -140,135 +226,127 @@ export const PRIZES: PrizeItem[] = [
   {
     id: 1,
     name: 'Almond Koka Unsweetened 180ml',
-    short: 'Almond Koka Không Đường',
-    desc: 'Sữa hạt hạnh nhân cao cấp vị nguyên chất thanh nhẹ',
+    short: 'Almond Koka Unsweetened',
+    desc: 'Unsweetened premium almond milk, light and refreshing',
     stock: 850,
     color: '#fffdf0',
     type: 'img',
-    imgSrc: ASSETS.almondKokaUnsweetened,
+    imgSrc: LOCAL_ASSETS.prizes.almondUnsweetened,
     boxBg: '#06b6d4'
   },
   {
     id: 2,
     name: 'Almond Koka Original 180ml',
-    short: 'Almond Koka Truyền Thống',
-    desc: 'Sữa hạt hạnh nhân thơm ngậy dồi dào Vitamin E',
+    short: 'Almond Koka Original',
+    desc: 'Creamy and nutty almond milk rich in Vitamin E',
     stock: 920,
     color: '#fef3c7',
     type: 'img',
-    imgSrc: ASSETS.almondKokaOriginal,
+    imgSrc: LOCAL_ASSETS.prizes.almondOriginal,
     boxBg: '#0284c7'
   },
   {
     id: 3,
-    name: 'Bánh Que Pretz Rong Biển Nori',
-    short: 'Pretz Rong Biển',
-    desc: 'Bánh que giòn rụm đậm vị rong biển Nhật Bản',
+    name: 'Pretz Nori Seaweed',
+    short: 'Pretz Nori Seaweed',
+    desc: 'Crispy biscuit sticks with savory Japanese seaweed',
     stock: 450,
     color: '#f0fdf4',
-    type: 'box',
+    type: 'img',
+    imgSrc: LOCAL_ASSETS.prizes.pretzNori,
     brand: 'PRETZ',
     sub: 'NORI',
-    boxBg: '#15803d',
-    barColor: '#86efac',
-    stickCol: '#fde047'
+    boxBg: '#15803d'
   },
   {
     id: 4,
-    name: 'Bánh Que Pretz Truffle Cheese',
+    name: 'Pretz Truffle Cheese',
     short: 'Pretz Truffle Cheese',
-    desc: 'Bánh que phô mai hòa quyện nấm Truffle quý phái',
+    desc: 'Crispy biscuit sticks infused with truffle & cheese',
     stock: 380,
     color: '#fefce8',
-    type: 'box',
+    type: 'img',
+    imgSrc: LOCAL_ASSETS.prizes.pretzCheese,
     brand: 'PRETZ',
     sub: 'CHEESE',
-    boxBg: '#d97706',
-    barColor: '#fde047',
-    stickCol: '#fed7aa'
+    boxBg: '#d97706'
   },
   {
     id: 5,
-    name: 'Bánh Que Pocky Chocolate 40g',
-    short: 'Pocky Sô-cô-la',
-    desc: 'Bánh que phủ sô-cô-la Glico danh tiếng',
+    name: 'Pocky Chocolate flavour 40g',
+    short: 'Pocky Chocolate',
+    desc: 'Crispy biscuit stick dipped in rich smooth chocolate',
     stock: 650,
     color: '#fff1f2',
-    type: 'box',
+    type: 'img',
+    imgSrc: LOCAL_ASSETS.prizes.pockyChoco,
     brand: 'Pocky',
     sub: 'CHOCO',
-    boxBg: '#be123c',
-    barColor: '#451a03',
-    stickCol: '#78350f'
+    boxBg: '#be123c'
   },
   {
     id: 6,
-    name: 'Bánh Que Pocky Cookies & Cream 40g',
+    name: 'Pocky Cookies & Cream flavour 40g',
     short: 'Pocky Cookies & Cream',
-    desc: 'Hòa quyện kem sữa ngọt ngào và bánh quy giòn',
+    desc: 'Crispy biscuit stick with milk cream & cookie crumbles',
     stock: 520,
     color: '#f8fafc',
-    type: 'box',
+    type: 'img',
+    imgSrc: LOCAL_ASSETS.prizes.pockyCookies,
     brand: 'Pocky',
     sub: 'COOKIES',
-    boxBg: '#1e293b',
-    barColor: '#f1f5f9',
-    stickCol: '#334155'
+    boxBg: '#1e293b'
   },
   {
     id: 7,
-    name: 'Bánh Que Pocky Dâu Tây Strawberry 39g',
-    short: 'Pocky Dâu Tây',
-    desc: 'Bánh que phủ kem dâu tây thơm ngon tươi mát',
+    name: 'Pocky Strawberry flavour 39g',
+    short: 'Pocky Strawberry',
+    desc: 'Fruity strawberry cream over crunchy biscuit stick',
     stock: 480,
     color: '#fdf2f8',
-    type: 'box',
+    type: 'img',
+    imgSrc: LOCAL_ASSETS.prizes.pockyBerry,
     brand: 'Pocky',
     sub: 'BERRY',
-    boxBg: '#db2777',
-    barColor: '#fbcfe8',
-    stickCol: '#f43f5e'
+    boxBg: '#db2777'
   },
   {
     id: 8,
-    name: 'Bánh Que Pocky Milky Matcha 40g',
-    short: 'Pocky Trà Xanh Matcha',
-    desc: 'Vị trà xanh matcha Uji Nhật Bản thanh mát hảo hạng',
+    name: 'Pocky Milky Matcha flavour 40g',
+    short: 'Pocky Milky Matcha',
+    desc: 'Authentic Japanese Uji matcha cream over biscuit stick',
     stock: 310,
     color: '#ecfdf5',
-    type: 'box',
+    type: 'img',
+    imgSrc: LOCAL_ASSETS.prizes.pockyMatcha,
     brand: 'Pocky',
     sub: 'MATCHA',
-    boxBg: '#047857',
-    barColor: '#a7f3d0',
-    stickCol: '#065f46'
+    boxBg: '#047857'
   },
   {
     id: 9,
-    name: 'Ống Bánh Pejoy Belgium Chocolate',
-    short: 'Pejoy Bỉ Chocolate',
-    desc: 'Ống bánh giòn nhân sô-cô-la Bỉ đậm đặc bên trong',
+    name: 'Pejoy Belgium Chocolate',
+    short: 'Pejoy Belgium Chocolate',
+    desc: 'Crispy biscuit shell filled with decadent Belgian chocolate',
     stock: 260,
     color: '#faf5ff',
-    type: 'box',
+    type: 'img',
+    imgSrc: LOCAL_ASSETS.prizes.pejoyChoco,
     brand: 'Pejoy',
     sub: 'CHOCO',
-    boxBg: '#581c87',
-    barColor: '#c084fc',
-    stickCol: '#e9d5ff'
+    boxBg: '#581c87'
   },
   {
     id: 10,
-    name: 'Ống Bánh Pejoy Hokkaido Milk',
-    short: 'Pejoy Sữa Hokkaido',
-    desc: 'Ống bánh giòn nhân sữa tươi Hokkaido béo ngậy',
+    name: 'Pejoy Hokkaido Milk',
+    short: 'Pejoy Hokkaido Milk',
+    desc: 'Crispy biscuit tube filled with rich Hokkaido milk cream',
     stock: 180,
     color: '#f0f9ff',
-    type: 'box',
+    type: 'img',
+    imgSrc: LOCAL_ASSETS.prizes.pejoyMilk,
     brand: 'Pejoy',
     sub: 'MILK',
-    boxBg: '#0284c7',
-    barColor: '#bae6fd',
-    stickCol: '#e0f2fe'
+    boxBg: '#0284c7'
   }
 ];

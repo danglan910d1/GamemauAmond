@@ -64,7 +64,7 @@ import prizePockyCookies from './SKU_VQ_PERFECT/Pocky Cookies & cream flavour 40
 import prizePockyBerry from './SKU_VQ_PERFECT/Pocky Strawberry flavour 39 gram.png';
 import prizePockyMatcha from './SKU_VQ_PERFECT/Pocky Milky Matcha flavour 40 gram.png';
 import prizePejoyChoco from './SKU_VQ_PERFECT/Pejoy Belgium Chocolate.png';
-import prizePejoyMilk from './SKU_VQ_PERFECT/Pejoy Hokkaido Milk.png';
+import prizePejoyVanilla from './SKU_VQ_PERFECT/Pejoy Madagascar Vanilla Cream.png';
 
 export const LOCAL_ASSETS = {
   backgrounds: {
@@ -118,7 +118,8 @@ export const LOCAL_ASSETS = {
     pockyBerry: prizePockyBerry,
     pockyMatcha: prizePockyMatcha,
     pejoyChoco: prizePejoyChoco,
-    pejoyMilk: prizePejoyMilk,
+    pejoyVanilla: prizePejoyVanilla,
+    pejoyMilk: prizePejoyVanilla,
   },
 };
 

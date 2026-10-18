@@ -43,7 +43,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
       type="button"
       disabled={isMatched}
       onClick={onClick}
-      className={`w-full text-left relative rounded-2xl p-2.5 flex items-center gap-2 border transition-all duration-150 active:scale-98 cursor-pointer min-h-[58px] ${cardStyle}`}
+      className={`w-full h-full text-left relative rounded-2xl p-2.5 flex items-center gap-2 border transition-all duration-150 active:scale-98 cursor-pointer min-h-[58px] ${cardStyle}`}
     >
       {/* Khung visual ở đầu thẻ */}
       {hasVisual ? (
@@ -70,12 +70,12 @@ export const MatchCard: React.FC<MatchCardProps> = ({
       )}
 
       {/* Nội dung text */}
-      <div className="flex flex-col min-w-0 pr-1 flex-1">
+      <div className="flex flex-col min-w-0 pr-1 flex-1 justify-center">
         <span
           className={`leading-tight ${
             side === 'right'
               ? 'text-[20px] sm:text-[22px] text-[#3c2415] font-bold tracking-tight'
-              : 'text-[13.5px] sm:text-[14.5px] text-[#3c2415] font-bold line-clamp-2'
+              : 'text-[13px] sm:text-[14px] text-[#3c2415] font-bold line-clamp-2'
           }`}
         >
           {title}

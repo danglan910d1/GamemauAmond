@@ -211,7 +211,7 @@ export const MATCH_DATA: MatchPair[] = [
   },
   {
     id: 'almond_koka',
-    leftTitle: 'Sữa Almond Koka 180ml',
+    leftTitle: 'Sữa Almond Koka',
     leftSubtitle: '100% Vitamin E',
     leftImage: ASSETS.almondKokaOriginal,
     rightTitle: '1',
@@ -338,15 +338,15 @@ export const PRIZES: PrizeItem[] = [
   },
   {
     id: 10,
-    name: 'Pejoy Hokkaido Milk',
-    short: 'Pejoy Hokkaido Milk',
-    desc: 'Crispy biscuit tube filled with rich Hokkaido milk cream',
+    name: 'Pejoy Madagascar Vanilla Cream',
+    short: 'Pejoy Madagascar Vanilla',
+    desc: 'Crispy biscuit shell filled with aromatic Madagascar vanilla cream',
     stock: 180,
-    color: '#f0f9ff',
+    color: '#fffbeb',
     type: 'img',
-    imgSrc: LOCAL_ASSETS.prizes.pejoyMilk,
+    imgSrc: LOCAL_ASSETS.prizes.pejoyVanilla,
     brand: 'Pejoy',
-    sub: 'MILK',
-    boxBg: '#0284c7'
+    sub: 'VANILLA',
+    boxBg: '#d97706'
   }
 ];

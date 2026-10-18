@@ -198,41 +198,44 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
             backgroundRepeat: 'no-repeat',
           }}
         >
-          {/* Bàn cờ 2 cột căn chỉnh cân đối, bỏ hoàn toàn tiêu đề NGUỒN CUNG CẤP & KHẨU PHẦN */}
-          <div className="grid grid-cols-2 gap-2 sm:gap-2.5 w-full">
-            {/* Cột trái: 5 mục thực phẩm */}
-            <div className="flex flex-col gap-2">
-              {MATCH_DATA.map((item) => (
-                <MatchCard
-                  key={item.id}
-                  title={item.leftTitle}
-                  subtitle={item.leftSubtitle}
-                  image={item.leftImage}
-                  isMatched={matchedIds.has(item.id)}
-                  isSelected={selectedLeft === item.id}
-                  isError={mismatchedLeft === item.id}
-                  side="left"
-                  onClick={() => handleLeftClick(item.id)}
-                />
-              ))}
-            </div>
+          {/* Bàn cờ 2 cột ghép đôi: Căn chỉnh theo từng hàng để item trái & item phải luôn bằng nhau 100% */}
+          <div className="flex flex-col gap-2 w-full">
+            {MATCH_DATA.map((leftItem, idx) => {
+              const rightItem = shuffledRightItems[idx];
+              return (
+                <div
+                  key={leftItem.id}
+                  className="grid grid-cols-2 gap-2 sm:gap-2.5 w-full items-stretch"
+                >
+                  {/* Cột trái: mục thực phẩm */}
+                  <MatchCard
+                    title={leftItem.leftTitle}
+                    subtitle={leftItem.leftSubtitle}
+                    image={leftItem.leftImage}
+                    isMatched={matchedIds.has(leftItem.id)}
+                    isSelected={selectedLeft === leftItem.id}
+                    isError={mismatchedLeft === leftItem.id}
+                    side="left"
+                    onClick={() => handleLeftClick(leftItem.id)}
+                  />
 
-            {/* Cột phải: 5 khẩu phần tương ứng (được shuffle) */}
-            <div className="flex flex-col gap-2">
-              {shuffledRightItems.map((item) => (
-                <MatchCard
-                  key={item.id}
-                  title={item.rightTitle}
-                  image={item.rightImage}
-                  icon={item.rightIcon}
-                  isMatched={matchedIds.has(item.id)}
-                  isSelected={selectedRight === item.id}
-                  isError={mismatchedRight === item.id}
-                  side="right"
-                  onClick={() => handleRightClick(item.id)}
-                />
-              ))}
-            </div>
+                  {/* Cột phải: khẩu phần tương ứng (được shuffle) */}
+                  {rightItem && (
+                    <MatchCard
+                      key={rightItem.id}
+                      title={rightItem.rightTitle}
+                      image={rightItem.rightImage}
+                      icon={rightItem.rightIcon}
+                      isMatched={matchedIds.has(rightItem.id)}
+                      isSelected={selectedRight === rightItem.id}
+                      isError={mismatchedRight === rightItem.id}
+                      side="right"
+                      onClick={() => handleRightClick(rightItem.id)}
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

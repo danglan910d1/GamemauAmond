@@ -55,11 +55,11 @@ export const SPAWN_INTERVAL_MIN = 300;
 
 /**
  * 3. TỐC ĐỘ RƠI CỦA VẬT THỂ (px / frame @60fps) - Số CÀNG LỚN thì rơi CÀNG NHANH
- * - BASE_SPEED: Tốc độ rơi ban đầu (4.4 px/frame -> rơi nhanh và hồi hộp)
- * - SPEED_STEP: Gia tốc tăng thêm mỗi khi bạn hứng được 1 giọt sữa (+0.24 px/frame)
+ * - BASE_SPEED: Tốc độ rơi ban đầu (3.8 px/frame -> tốc độ vừa vặn, mượt mà, dễ phản xạ)
+ * - SPEED_STEP: Gia tốc tăng thêm mỗi khi bạn hứng được 1 giọt sữa (+0.20 px/frame)
  */
-export const BASE_SPEED = 4.4;
-export const SPEED_STEP = 0.24;
+export const BASE_SPEED = 3.8;
+export const SPEED_STEP = 0.20;
 
 export interface SpriteDef {
   src: string;

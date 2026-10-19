@@ -7,10 +7,12 @@ export interface MatchCardProps {
   image?: string;
   icon?: string;
   isMatched: boolean;
+  isJustMatched?: boolean;
   isSelected: boolean;
   isError: boolean;
   side: 'left' | 'right';
   onClick: () => void;
+  cardRef?: (node: HTMLButtonElement | null) => void;
 }
 
 export const MatchCard: React.FC<MatchCardProps> = ({
@@ -19,14 +21,18 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   image,
   icon,
   isMatched,
+  isJustMatched = false,
   isSelected,
   isError,
   side,
   onClick,
+  cardRef,
 }) => {
-  // 1. Style khi chọn có background xanh dương nhạt, tất cả item đều có border nhẹ
+  // 1. Style khi chọn có background xanh dương nhạt, khi vừa match đúng thì phình to nổi bật (animate-matchPop)
   let cardStyle = 'bg-white/95 border-[#d7c2ba]/60 shadow-xs hover:border-[#b45309]/50';
-  if (isMatched) {
+  if (isJustMatched) {
+    cardStyle = 'bg-gradient-to-r from-[#dcfce7] via-[#bbf7d0] to-[#86efac] border-2 border-[#16a34a] animate-matchPop ring-4 ring-[#22c55e]/60 z-50';
+  } else if (isMatched) {
     cardStyle = 'bg-[#f0fdf4] border-[#22c55e]/60 shadow-none opacity-85';
   } else if (isError) {
     cardStyle = 'bg-[#fee2e2] border-[#ef4444] animate-shake';
@@ -35,19 +41,30 @@ export const MatchCard: React.FC<MatchCardProps> = ({
     cardStyle = 'bg-[#e0f2fe] border-[#38bdf8] shadow-sm scale-[1.01]';
   }
 
-  // Đối với thẻ số 1 (sữa) ở cột phải: không có image thì vẫn giữ khoảng trống w-10 h-10 để thẳng hàng
+  // Đối với thẻ số 1 (sữa) ở cột phải: không có image thì vẫn giữ khoảng trống để thẳng hàng
   const hasVisual = Boolean(image || icon);
 
   return (
     <button
+      ref={cardRef}
       type="button"
       disabled={isMatched}
       onClick={onClick}
-      className={`w-full h-full text-left relative rounded-2xl p-2.5 flex items-center gap-2 border transition-all duration-150 active:scale-98 cursor-pointer min-h-[58px] ${cardStyle}`}
+      className={`w-full h-full text-left relative rounded-2xl flex items-center border transition-all duration-200 active:scale-98 cursor-pointer ${
+        side === 'right'
+          ? 'px-2 py-1.5 gap-1.5 justify-between'
+          : 'px-2.5 py-1.5 gap-2'
+      } ${cardStyle}`}
     >
       {/* Khung visual ở đầu thẻ */}
       {hasVisual ? (
-        <div className="w-10 h-10 rounded-xl bg-[#FAF4ED] flex items-center justify-center shrink-0 p-1 overflow-hidden border border-[#ebdccd]/60">
+        <div
+          className={`${
+            side === 'right'
+              ? 'w-7 h-7 rounded-lg'
+              : 'w-10 h-10 rounded-xl'
+          } bg-[#FAF4ED] flex items-center justify-center shrink-0 p-0.5 overflow-hidden border border-[#ebdccd]/60`}
+        >
           {image ? (
             <img
               src={image}
@@ -59,23 +76,38 @@ export const MatchCard: React.FC<MatchCardProps> = ({
               } object-contain drop-shadow-xs`}
             />
           ) : (
-            <span className="material-symbols-outlined text-[#3c2415] text-[22px]">
+            <span
+              className={`material-symbols-outlined text-[#3c2415] ${
+                side === 'right' ? 'text-[17px]' : 'text-[22px]'
+              }`}
+            >
               {icon || 'nutrition'}
             </span>
           )}
         </div>
       ) : (
-        /* Chừa khoảng trống ở đầu để con số thẳng hàng với các thẻ khác */
-        <div className="w-10 h-10 shrink-0 pointer-events-none" aria-hidden="true" />
+        /* Chừa khoảng trống ở đầu để con số thẳng hàng với các thẻ khác nếu không có visual */
+        <div
+          className={`${
+            side === 'right' ? 'w-7 h-7' : 'w-10 h-10'
+          } shrink-0 pointer-events-none`}
+          aria-hidden="true"
+        />
       )}
 
       {/* Nội dung text */}
-      <div className="flex flex-col min-w-0 pr-1 flex-1 justify-center">
+      <div className="flex flex-col min-w-0 flex-1 justify-center px-0.5">
         <span
-          className={`leading-tight ${
+          className={`leading-tight transition-all duration-200 ${
             side === 'right'
-              ? 'text-[20px] sm:text-[22px] text-[#3c2415] font-bold tracking-tight'
-              : 'text-[13px] sm:text-[14px] text-[#3c2415] font-bold line-clamp-2'
+              ? `text-[19px] sm:text-[21px] font-bold tracking-tight inline-block text-center whitespace-nowrap ${
+                  isJustMatched
+                    ? 'text-[#14532d] scale-125 font-black drop-shadow-xs'
+                    : isMatched
+                    ? 'text-[#15803d]'
+                    : 'text-[#3c2415]'
+                }`
+              : 'text-[12.5px] sm:text-[13.5px] text-[#3c2415] font-bold'
           }`}
         >
           {title}
@@ -95,16 +127,16 @@ export const MatchCard: React.FC<MatchCardProps> = ({
       )}
 
       {side === 'right' && (
-        <div className="ml-auto pr-0.5 shrink-0">
+        <div className="shrink-0 w-5 h-5 flex items-center justify-center">
           {isMatched ? (
             <span
-              className="material-symbols-outlined text-[19px] text-[#16a34a]"
+              className="material-symbols-outlined text-[18px] text-[#16a34a]"
               style={{ fontVariationSettings: '"FILL" 1' }}
             >
               verified
             </span>
           ) : (
-            <span className="material-symbols-outlined text-[18px] text-[#d7c2ba]">
+            <span className="material-symbols-outlined text-[16px] text-[#d7c2ba]">
               radio_button_unchecked
             </span>
           )}

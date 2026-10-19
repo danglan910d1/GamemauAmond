@@ -3,7 +3,7 @@
  * Cấu hình Minigame Vòng 1 – Hứng Giọt Dinh Dưỡng
  * Toàn bộ thông số hình học được đo trực tiếp trên ảnh ly-hung-sua.png (277 x 378, đã cắt sát viền).
  */
-import { ASSETS } from '../../types';
+import { ASSETS } from "../../types";
 
 /** Số huy hiệu cần hứng để thắng (mốc đầy 180ml) */
 export const TARGET_DROPS = 6;
@@ -25,7 +25,7 @@ export const CUP_MOUTH_HALF_RATIO = 0.42;
 export const CUP_BODY_HALF_RATIO = 0.4;
 
 /** Vùng lòng ly (polygon clip, % theo khung ảnh) để đổ lớp sữa bên trong */
-export const CUP_INNER_CLIP = 'polygon(6% 5%, 94% 5%, 85% 93%, 15% 93%)';
+export const CUP_INNER_CLIP = "polygon(6% 5%, 94% 5%, 85% 93%, 15% 93%)";
 
 /**
  * Mức sữa (top, % chiều cao ảnh ly) theo số huy hiệu đã hứng 0 → 6.
@@ -44,7 +44,7 @@ export const ITEM_SIZE = 50;
  * - HAZARD_RATIO: Mặc định (0.42)
  */
 export const HAZARD_RATIO_START = 0.35;
-export const HAZARD_RATIO_MAX = 0.50;
+export const HAZARD_RATIO_MAX = 0.5;
 export const HAZARD_RATIO = 0.42;
 
 /**
@@ -60,8 +60,8 @@ export const SPAWN_INTERVAL_MIN = 360;
  * - BASE_SPEED: Tốc độ rơi ban đầu (2.6 px/frame -> nhanh và mượt mà hơn, đúng nhịp chơi)
  * - SPEED_STEP: Gia tốc tăng thêm mỗi khi hứng 1 giọt (+0.15 px/frame -> tốc độ tăng từ từ và đều đặn)
  */
-export const BASE_SPEED = 2.6;
-export const SPEED_STEP = 0.15;
+export const BASE_SPEED = 2.8;
+export const SPEED_STEP = 0.1;
 
 export interface SpriteDef {
   src: string;
@@ -70,21 +70,21 @@ export interface SpriteDef {
 
 /** 3 Huy hiệu dinh dưỡng – vật thể CẦN HỨNG */
 export const NUTRITION_SPRITES: SpriteDef[] = [
-  { src: ASSETS.iconVitaminE, label: '+1 Vitamin E' },
-  { src: ASSETS.iconZeroCholesterol, label: '+1 0% Cholesterol' },
-  { src: ASSETS.iconRichFiber, label: '+1 Chất xơ' },
+  { src: ASSETS.iconVitaminE, label: "+1 Vitamin E" },
+  { src: ASSETS.iconZeroCholesterol, label: "+1 0% Cholesterol" },
+  { src: ASSETS.iconRichFiber, label: "+1 Chất xơ" },
 ];
 
 /** 3 Chướng ngại vật – vật thể CẦN TRÁNH */
 export const OBSTACLE_SPRITES: SpriteDef[] = [
-  { src: ASSETS.obstacleSoybean, label: 'ĐẬU NÀNH' },
-  { src: ASSETS.obstacleHighCholesterol, label: 'CHOLESTEROL CAO' },
-  { src: ASSETS.obstacleAnimalMilk, label: 'SỮA ĐỘNG VẬT' },
+  { src: ASSETS.obstacleSoybean, label: "ĐẬU NÀNH" },
+  { src: ASSETS.obstacleHighCholesterol, label: "CHOLESTEROL CAO" },
+  { src: ASSETS.obstacleAnimalMilk, label: "SỮA ĐỘNG VẬT" },
 ];
 
 /** Thông điệp mở khóa tại các mốc vạch trên ly */
 export const MILESTONE_TEXT: Record<number, string> = {
-  2: 'Đạt MỐC 1!',
-  4: 'Đạt MỐC 2!',
-  6: 'ĐẦY 180ml!',
+  2: "Đạt MỐC 1!",
+  4: "Đạt MỐC 2!",
+  6: "ĐẦY 180ml!",
 };

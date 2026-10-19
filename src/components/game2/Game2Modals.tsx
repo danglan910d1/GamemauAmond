@@ -46,8 +46,8 @@ export const Game2IntroModal: React.FC<Game2IntroModalProps> = ({
         {/* Đoạn text dẫn chuyện theo đúng yêu cầu */}
         <h2 className="font-bold text-[#3c2415] tracking-tight leading-[1.4] text-[16px] sm:text-[17px] mb-5 px-1">
           Mỗi ngày bạn cần{" "}
-          <span className="text-[#b45309] font-bold">100 mg Vitamin E</span>.
-          Bạn có biết nguồn dưỡng chất đó đến từ đâu không?
+          <span className="text-[#b45309] font-bold">10 mg Vitamin E</span>. Bạn
+          có biết nguồn dưỡng chất đó đến từ đâu không?
         </h2>
 
         {/* Nút CTA BẮT ĐẦU VÒNG 2 */}

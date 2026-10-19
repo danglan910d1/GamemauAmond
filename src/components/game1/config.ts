@@ -39,29 +39,29 @@ export const ITEM_SIZE = 50;
 
 /**
  * 1. TỈ LỆ XUẤT HIỆN CHƯỚNG NGẠI VẬT (0.0 đến 1.0)
- * - HAZARD_RATIO_START: Giai đoạn đầu (0-2 giọt đầu): 0.08 (Chỉ 8% chướng ngại vật, >90% là sữa)
- * - HAZARD_RATIO_MAX: Giai đoạn sau (gần đầy ly): 0.22 (Tối đa chỉ 22% chướng ngại vật, gần 80% là sữa)
- * - HAZARD_RATIO: Giá trị mặc định (0.18)
+ * - HAZARD_RATIO_START: Lúc mới vào (0-1 giọt): 0.35 (35% chướng ngại vật, tạo thử thách né tránh)
+ * - HAZARD_RATIO_MAX: Khi sắp đầy ly: 0.50 (50% chướng ngại vật, tạo kịch tính chặng cuối)
+ * - HAZARD_RATIO: Mặc định (0.42)
  */
-export const HAZARD_RATIO_START = 0.08;
-export const HAZARD_RATIO_MAX = 0.22;
-export const HAZARD_RATIO = 0.18;
+export const HAZARD_RATIO_START = 0.35;
+export const HAZARD_RATIO_MAX = 0.50;
+export const HAZARD_RATIO = 0.42;
 
 /**
- * 2. KHOẢNG CÁCH THỜI GIAN GIỮA CÁC ĐỢT RƠI (ms) - Số CÀNG LỚN thì rơi CÀNG THƯ THÁI
- * - SPAWN_INTERVAL_START: Lúc mới bắt đầu chơi (700ms -> rơi rất thong thả)
- * - SPAWN_INTERVAL_MIN: Lúc gần thắng (500ms -> nhịp độ nhẹ nhàng, không bị dồn dập)
+ * 2. KHOẢNG CÁCH THỜI GIAN GIỮA CÁC ĐỢT RƠI (ms) - Số CÀNG NHỎ thì rơi CÀNG DỒN DẬP
+ * - SPAWN_INTERVAL_START: Lúc mới bắt đầu chơi (520ms -> nhịp độ nhanh vừa, cuốn hút)
+ * - SPAWN_INTERVAL_MIN: Lúc gần thắng (360ms -> nhịp độ kịch tính, hấp dẫn)
  */
-export const SPAWN_INTERVAL_START = 700;
-export const SPAWN_INTERVAL_MIN = 500;
+export const SPAWN_INTERVAL_START = 520;
+export const SPAWN_INTERVAL_MIN = 360;
 
 /**
  * 3. TỐC ĐỘ RƠI CỦA VẬT THỂ (px / frame @60fps) - Số CÀNG LỚN thì rơi CÀNG NHANH
- * - BASE_SPEED: Tốc độ rơi ban đầu (1.6 px/frame -> siêu chậm rãi, trôi êm ái, cực kỳ dễ chơi)
- * - SPEED_STEP: Gia tốc tăng thêm mỗi khi bạn hứng được 1 giọt sữa (+0.05 px/frame -> tăng rất nhẹ)
+ * - BASE_SPEED: Tốc độ rơi ban đầu (2.6 px/frame -> nhanh và mượt mà hơn, đúng nhịp chơi)
+ * - SPEED_STEP: Gia tốc tăng thêm mỗi khi hứng 1 giọt (+0.15 px/frame -> tốc độ tăng từ từ và đều đặn)
  */
-export const BASE_SPEED = 1.6;
-export const SPEED_STEP = 0.05;
+export const BASE_SPEED = 2.6;
+export const SPEED_STEP = 0.15;
 
 export interface SpriteDef {
   src: string;

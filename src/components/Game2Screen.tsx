@@ -1,9 +1,13 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ScreenId, MATCH_DATA, ASSETS, MatchPair, StoreInfo } from '../types';
-import { sound } from '../sound';
-import MatchCard from './game2/MatchCard';
-import { Game2IntroModal, Game2WonModal, Game2OverModal } from './game2/Game2Modals';
-import SelectStoreModal from './game2/SelectStoreModal';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { ScreenId, MATCH_DATA, ASSETS, MatchPair, StoreInfo } from "../types";
+import { sound } from "../sound";
+import MatchCard from "./game2/MatchCard";
+import {
+  Game2IntroModal,
+  Game2WonModal,
+  Game2OverModal,
+} from "./game2/Game2Modals";
+import SelectStoreModal from "./game2/SelectStoreModal";
 
 interface MatchLine {
   id: string;
@@ -46,7 +50,11 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
 }) => {
   // 1. Intro Modal state: hiển thị dẫn chuyện trước khi bắt đầu (hỗ trợ hash QA)
   const [showIntroModal, setShowIntroModal] = useState<boolean>(() => {
-    if (typeof window !== 'undefined' && (window.location.hash === '#game2_board' || window.location.hash === '#game2_won')) {
+    if (
+      typeof window !== "undefined" &&
+      (window.location.hash === "#game2_board" ||
+        window.location.hash === "#game2_won")
+    ) {
       return false;
     }
     return true;
@@ -61,7 +69,9 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
   const [mistakesCount, setMistakesCount] = useState<number>(0);
 
   // 3. Khẩu phần ăn được xáo trộn ngẫu nhiên hoàn toàn mỗi lượt chơi
-  const [shuffledRightItems, setShuffledRightItems] = useState<MatchPair[]>(() => shuffleRightCards(MATCH_DATA));
+  const [shuffledRightItems, setShuffledRightItems] = useState<MatchPair[]>(
+    () => shuffleRightCards(MATCH_DATA),
+  );
 
   // 4. Hiệu ứng nối & phình to khẩu phần ăn khi ghép đúng
   const [matchLines, setMatchLines] = useState<MatchLine[]>([]);
@@ -73,7 +83,9 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
 
   // 5. Modals kết quả (hỗ trợ hash QA)
   const [showWonModal, setShowWonModal] = useState<boolean>(() => {
-    return typeof window !== 'undefined' && window.location.hash === '#game2_won';
+    return (
+      typeof window !== "undefined" && window.location.hash === "#game2_won"
+    );
   });
   const [showOverModal, setShowOverModal] = useState<boolean>(false);
   const [showStoreModal, setShowStoreModal] = useState<boolean>(false);
@@ -118,11 +130,11 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
           const midX = (x1 + x2) / 2;
           const d = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
           return { ...l, d, x1, y1, x2, y2 };
-        })
+        }),
       );
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const checkMatch = (leftId: string, rightId: string) => {
@@ -162,7 +174,7 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
         window.setTimeout(() => {
           setJustMatchedId(null);
           setMatchLines((prev) =>
-            prev.map((l) => (l.id === leftId ? { ...l, isNew: false } : l))
+            prev.map((l) => (l.id === leftId ? { ...l, isNew: false } : l)),
           );
         }, 800);
       }
@@ -220,7 +232,7 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
     if (onGoHome) {
       onGoHome();
     } else {
-      onNavigate('home');
+      onNavigate("home");
     }
   };
 
@@ -229,9 +241,9 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
       className="relative flex-1 w-full max-w-md mx-auto px-3.5 pt-3 pb-safe flex flex-col justify-between overflow-y-auto select-none"
       style={{
         backgroundImage: `linear-gradient(rgba(253, 249, 243, 0.72) 0%, rgba(253, 249, 243, 0.50) 50%, rgba(253, 249, 243, 0.78) 100%), url(${ASSETS.game2BgCard})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center center',
-        backgroundRepeat: 'no-repeat',
+        backgroundSize: "cover",
+        backgroundPosition: "center center",
+        backgroundRepeat: "no-repeat",
       }}
     >
       <div className="flex flex-col w-full flex-1 justify-center">
@@ -247,7 +259,8 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
             </div>
 
             <span className="typo-heading text-[#3c2415] text-[15px] sm:text-[16px] leading-none">
-              <b className="font-bold text-[#b45309]">{matchedIds.size}/5</b> Cặp
+              <b className="font-bold text-[#b45309]">{matchedIds.size}/5</b>{" "}
+              Cặp
             </span>
 
             {/* 5 chấm tròn tiến độ trùng khớp thiết kế Game 1 */}
@@ -257,8 +270,8 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
                   key={i}
                   className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
                     i < matchedIds.size
-                      ? 'bg-[#d97706] scale-110 shadow-xs'
-                      : 'bg-[#e7ded4]'
+                      ? "bg-[#d97706] scale-110 shadow-xs"
+                      : "bg-[#e7ded4]"
                   }`}
                 />
               ))}
@@ -272,18 +285,24 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
           className="relative w-full rounded-[28px] p-3 sm:p-3.5 border-2 border-[#ebdccd] shadow-lg overflow-hidden flex flex-col justify-center my-auto"
           style={{
             backgroundImage: `linear-gradient(rgba(255, 253, 249, 0.88) 0%, rgba(255, 253, 249, 0.80) 50%, rgba(255, 253, 249, 0.92) 100%), url(${ASSETS.game2BgCard})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center center',
-            backgroundRepeat: 'no-repeat',
+            backgroundSize: "cover",
+            backgroundPosition: "center center",
+            backgroundRepeat: "no-repeat",
           }}
         >
           {/* SVG Overlay: Vẽ các tia nối giữa thực phẩm & khẩu phần ăn tương ứng */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible"
-            style={{ width: '100%', height: '100%' }}
+            style={{ width: "100%", height: "100%" }}
           >
             <defs>
-              <filter id="game2Glow" x="-20%" y="-20%" width="140%" height="140%">
+              <filter
+                id="game2Glow"
+                x="-20%"
+                y="-20%"
+                width="140%"
+                height="140%"
+              >
                 <feGaussianBlur stdDeviation="3.5" result="blur" />
                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
               </filter>
@@ -299,7 +318,7 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
                   strokeWidth={line.isNew ? 7 : 5}
                   strokeOpacity={line.isNew ? 0.75 : 0.45}
                   strokeLinecap="round"
-                  filter={line.isNew ? 'url(#game2Glow)' : undefined}
+                  filter={line.isNew ? "url(#game2Glow)" : undefined}
                 />
                 {/* Tia nối chính: Dùng màu xanh đậm đồng nhất #16a34a để cả đường ngang và đường chéo đều rõ nét 100% */}
                 <path
@@ -308,7 +327,7 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
                   stroke="#16a34a"
                   strokeWidth={line.isNew ? 4 : 3}
                   strokeLinecap="round"
-                  className={line.isNew ? 'animate-connectLine' : ''}
+                  className={line.isNew ? "animate-connectLine" : ""}
                 />
                 {/* Chấm tròn neo ở thẻ trái */}
                 <circle
@@ -342,7 +361,7 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
                   className="flex items-stretch justify-between w-full h-[62px] sm:h-[64px]"
                 >
                   {/* Cột trái: Kích thước vừa vặn cho tên thực phẩm (đã bỏ subtitle) */}
-                  <div className="w-[162px] sm:w-[170px] h-full shrink-0">
+                  <div className="w-[162px] sm:w-[170px] h-full shrink-0 uppercase">
                     <MatchCard
                       cardRef={(el) => {
                         leftCardRefs.current[leftItem.id] = el;
@@ -357,9 +376,9 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
                     />
                   </div>
 
-                  {/* Cột phải: 118px - 124px thoải mái hiển thị số + đơn vị khi match */}
+                  {/* Cột phải: 120px - 128px thoải mái hiển thị số + đơn vị khi match */}
                   {rightItem && (
-                    <div className="w-[118px] sm:w-[124px] h-full shrink-0">
+                    <div className="w-[120px] sm:w-[128px] h-full shrink-0 uppercase">
                       <MatchCard
                         key={rightItem.id}
                         cardRef={(el) => {
@@ -410,10 +429,7 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
         onClose={() => setShowStoreModal(false)}
       />
 
-      <Game2OverModal
-        isOpen={showOverModal}
-        onGoHome={handleGoHomeInternal}
-      />
+      <Game2OverModal isOpen={showOverModal} onGoHome={handleGoHomeInternal} />
     </div>
   );
 };

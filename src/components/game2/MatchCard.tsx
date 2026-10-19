@@ -63,9 +63,15 @@ export const MatchCard: React.FC<MatchCardProps> = ({
         <div
           className={`${
             side === 'right'
-              ? 'w-6 h-6 rounded-md'
-              : 'w-10 h-10 rounded-xl'
-          } bg-[#FAF4ED] flex items-center justify-center shrink-0 p-0.5 overflow-hidden border border-[#ebdccd]/60`}
+              ? `w-6 h-6 rounded-md ${
+                  isMatched
+                    ? 'bg-[#dcfce7] border-[#86efac]'
+                    : isSelected
+                    ? 'bg-[#e0f2fe] border-[#7dd3fc]'
+                    : 'bg-[#FAF4ED] border-[#ebdccd]/70'
+                }`
+              : 'w-10 h-10 rounded-xl bg-[#FAF4ED] border-[#ebdccd]/60'
+          } flex items-center justify-center shrink-0 p-0.5 overflow-hidden border`}
         >
           {image ? (
             <img
@@ -79,8 +85,16 @@ export const MatchCard: React.FC<MatchCardProps> = ({
             />
           ) : (
             <span
-              className={`material-symbols-outlined text-[#3c2415] ${
-                side === 'right' ? 'text-[14px]' : 'text-[22px]'
+              className={`material-symbols-outlined transition-colors duration-200 ${
+                side === 'right'
+                  ? `text-[14px] ${
+                      isMatched
+                        ? 'text-[#16a34a]'
+                        : isSelected
+                        ? 'text-[#0284c7]'
+                        : 'text-[#8c7462]'
+                    }`
+                  : 'text-[#3c2415] text-[22px]'
               }`}
             >
               {icon || 'nutrition'}
@@ -97,24 +111,26 @@ export const MatchCard: React.FC<MatchCardProps> = ({
         />
       )}
 
-      {/* Nội dung text */}
+      {/* Nội dung text: Uppercase, đậm nét, tinh chỉnh typographic cao cấp */}
       <div className="flex flex-col min-w-0 flex-1 justify-center px-0.5">
         {side === 'right' ? (
-          <div className="inline-flex items-baseline justify-center gap-0.5 flex-nowrap w-full">
+          <div className="inline-flex items-baseline justify-center gap-1 flex-nowrap w-full">
             <span
-              className={`leading-tight font-bold tracking-tight transition-all duration-200 whitespace-nowrap ${
+              className={`leading-tight font-black tracking-tight transition-all duration-200 whitespace-nowrap ${
                 isJustMatched
-                  ? 'text-[17px] sm:text-[18px] text-[#14532d] font-black drop-shadow-xs'
+                  ? 'text-[17px] sm:text-[18px] text-[#14532d] drop-shadow-xs'
                   : isMatched
-                  ? 'text-[15.5px] sm:text-[16.5px] text-[#15803d]'
-                  : 'text-[18px] sm:text-[20px] text-[#3c2415]'
+                  ? 'text-[16px] sm:text-[17px] text-[#15803d]'
+                  : isSelected
+                  ? 'text-[18px] sm:text-[20px] text-[#0369a1]'
+                  : 'text-[18px] sm:text-[20px] text-[#2c1810]'
               }`}
             >
               {title}
             </span>
             {isMatched && unit && (
               <span
-                className={`font-bold text-[12px] sm:text-[13px] text-[#16a34a] whitespace-nowrap ml-0.5 ${
+                className={`font-extrabold uppercase tracking-wider text-[11px] sm:text-[12px] text-[#16a34a] whitespace-nowrap ${
                   isJustMatched ? 'animate-unitPopIn' : ''
                 }`}
               >
@@ -123,16 +139,28 @@ export const MatchCard: React.FC<MatchCardProps> = ({
             )}
           </div>
         ) : (
-          <>
-            <span className="text-[12.5px] sm:text-[13.5px] text-[#3c2415] font-bold leading-snug line-clamp-2">
+          <div className="flex flex-col justify-center">
+            <span
+              className={`uppercase font-extrabold tracking-wide leading-[1.25] transition-all duration-200 line-clamp-2 ${
+                isMatched
+                  ? 'text-[#15803d]'
+                  : isSelected
+                  ? 'text-[#0369a1]'
+                  : 'text-[#2c1810]'
+              } ${
+                title.includes('180ml') || title.length > 14
+                  ? 'text-[11.5px] sm:text-[12px]'
+                  : 'text-[12.5px] sm:text-[13.5px]'
+              }`}
+            >
               {title}
             </span>
             {subtitle && (
-              <span className="text-[11px] sm:text-[11.5px] text-[#6b5847] leading-[1.25] font-medium truncate mt-0.5">
+              <span className="text-[10px] sm:text-[11px] text-[#6b5847] leading-[1.2] font-semibold uppercase tracking-wider truncate mt-0.5">
                 {subtitle}
               </span>
             )}
-          </>
+          </div>
         )}
       </div>
 

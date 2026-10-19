@@ -17,7 +17,8 @@ import {
   CUP_MOUTH_HALF_RATIO,
   CUP_BODY_HALF_RATIO,
   ITEM_SIZE,
-  HAZARD_RATIO,
+  HAZARD_RATIO_START,
+  HAZARD_RATIO_MAX,
   SPAWN_INTERVAL_START,
   SPAWN_INTERVAL_MIN,
   BASE_SPEED,
@@ -140,12 +141,20 @@ export const Game1Screen: React.FC<Game1ScreenProps> = ({ onNavigate, onGoHome, 
 
     const spawn = (now: number) => {
       const { w } = arenaSizeRef.current;
-      const progress = caughtRef.current / TARGET_DROPS;
+      const count = caughtRef.current;
+      const progress = count / TARGET_DROPS;
       const interval = SPAWN_INTERVAL_START - (SPAWN_INTERVAL_START - SPAWN_INTERVAL_MIN) * progress;
       if (now - lastSpawnRef.current < interval) return;
       lastSpawnRef.current = now;
 
-      const isHazard = Math.random() < HAZARD_RATIO;
+      // 1. Tỉ lệ chướng ngại vật theo giai đoạn:
+      // - 0-1 giọt đầu: 100% giọt sữa (0% chướng ngại vật) để người chơi dễ dàng làm quen thao tác hứng
+      // - Từ giọt thứ 2 trở lên: tăng nhẹ dần từ HAZARD_RATIO_START (15%) đến HAZARD_RATIO_MAX (45%)
+      const currentHazardRatio = count < 2
+        ? 0
+        : HAZARD_RATIO_START + (HAZARD_RATIO_MAX - HAZARD_RATIO_START) * progress;
+      const isHazard = Math.random() < currentHazardRatio;
+
       const margin = ITEM_SIZE / 2 + 6;
       // Tránh sinh 2 vật thể liên tiếp chồng cùng một cột
       let x = margin + Math.random() * (w - margin * 2);
@@ -154,34 +163,35 @@ export const Game1Screen: React.FC<Game1ScreenProps> = ({ onNavigate, onGoHome, 
       }
       lastSpawnXRef.current = x;
 
-      const speedBase = BASE_SPEED + caughtRef.current * SPEED_STEP;
+      // 2. Tốc độ rơi: siêu chậm rãi, trôi êm ái, người chơi thoải mái di chuyển ly
+      const speedBase = BASE_SPEED + count * SPEED_STEP;
       itemsRef.current.push({
         id: nextIdRef.current++,
         x,
         y: -ITEM_SIZE / 2,
-        speed: speedBase + Math.random() * 1.0 + (isHazard ? 0.35 : 0),
+        speed: speedBase + Math.random() * 0.2,
         isHazard,
         size: ITEM_SIZE,
         variant: Math.floor(Math.random() * 3),
-        rotation: Math.random() * 20 - 10,
+        rotation: Math.random() * 14 - 7,
       });
 
-      // Rơi đồng thời ở làn khác (tăng tần suất lên 44% để màn game kịch tính hơn):
-      // QUY TẮC BẮT BUỘC: Không bao giờ để cả 2 vật thể trong một lượt rớt đều là chướng ngại vật!
-      // Nếu vật thể 1 là chướng ngại vật thì vật thể 2 BẮT BUỘC là giọt sữa/hạt dinh dưỡng để hứng.
-      if (Math.random() < 0.44) {
+      // 3. Rơi đồng thời ở làn khác (Double Drop):
+      // - Chỉ xuất hiện khi gần thắng (>= 4 giọt) với tỉ lệ nhỏ (15%)
+      // - Vật thứ 2 luôn luôn là giọt sữa dinh dưỡng để hứng, không bao giờ là chướng ngại vật!
+      const doubleDropChance = count < 4 ? 0 : 0.15;
+      if (Math.random() < doubleDropChance) {
         let x2 = margin + Math.random() * (w - margin * 2);
         if (Math.abs(x2 - x) > ITEM_SIZE * 1.35) {
-          const isSecondHazard = isHazard ? false : Math.random() < 0.35;
           itemsRef.current.push({
             id: nextIdRef.current++,
             x: x2,
             y: -ITEM_SIZE * 0.9,
-            speed: speedBase + Math.random() * 0.6,
-            isHazard: isSecondHazard,
+            speed: speedBase + Math.random() * 0.2,
+            isHazard: false, // Luôn là giọt sữa để hứng thêm
             size: ITEM_SIZE,
             variant: Math.floor(Math.random() * 3),
-            rotation: Math.random() * 20 - 10,
+            rotation: Math.random() * 14 - 7,
           });
         }
       }

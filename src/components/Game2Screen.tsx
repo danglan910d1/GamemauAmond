@@ -341,14 +341,13 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
                   key={leftItem.id}
                   className="flex items-stretch justify-between w-full h-[62px] sm:h-[64px]"
                 >
-                  {/* Cột trái: Rộng hơn (178px - 186px) để text Sữa Almond Koka không bị cắt */}
-                  <div className="w-[178px] sm:w-[186px] h-full shrink-0">
+                  {/* Cột trái: Kích thước vừa vặn cho tên thực phẩm (đã bỏ subtitle) */}
+                  <div className="w-[162px] sm:w-[170px] h-full shrink-0">
                     <MatchCard
                       cardRef={(el) => {
                         leftCardRefs.current[leftItem.id] = el;
                       }}
                       title={leftItem.leftTitle}
-                      subtitle={leftItem.leftSubtitle}
                       image={leftItem.leftImage}
                       isMatched={matchedIds.has(leftItem.id)}
                       isSelected={selectedLeft === leftItem.id}
@@ -358,15 +357,16 @@ export const Game2Screen: React.FC<Game2ScreenProps> = ({
                     />
                   </div>
 
-                  {/* Cột phải: Ngắn lại (~104px - 110px) nhưng đầy đủ không gian không bị đè nội dung */}
+                  {/* Cột phải: 118px - 124px thoải mái hiển thị số + đơn vị khi match */}
                   {rightItem && (
-                    <div className="w-[104px] sm:w-[110px] h-full shrink-0">
+                    <div className="w-[118px] sm:w-[124px] h-full shrink-0">
                       <MatchCard
                         key={rightItem.id}
                         cardRef={(el) => {
                           rightCardRefs.current[rightItem.id] = el;
                         }}
                         title={rightItem.rightTitle}
+                        unit={rightItem.rightUnit}
                         image={rightItem.rightImage}
                         icon={rightItem.rightIcon}
                         isMatched={matchedIds.has(rightItem.id)}

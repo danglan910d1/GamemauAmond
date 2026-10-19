@@ -16,12 +16,13 @@ export interface ProductItem {
 export interface MatchPair {
   id: string;
   leftTitle: string;
-  leftSubtitle: string;
+  leftSubtitle?: string;
   leftImage: string;
   rightTitle: string;
-  rightSubtitle: string;
+  rightSubtitle?: string;
   rightIcon?: string;
   rightImage?: string;
+  rightUnit?: string;
   factTitle: string;
   factText: string;
 }
@@ -183,10 +184,9 @@ export const MATCH_DATA: MatchPair[] = [
   {
     id: "sweet_potato",
     leftTitle: "Khoai lang",
-    leftSubtitle: "Giàu Vitamin E",
     leftImage: ASSETS.foodSweetPotato,
     rightTitle: "1.2",
-    rightSubtitle: "Khẩu phần tương đương",
+    rightUnit: "củ",
     rightIcon: "restaurant",
     factTitle: "Khoai lang & Vitamin E",
     factText:
@@ -194,23 +194,21 @@ export const MATCH_DATA: MatchPair[] = [
   },
   {
     id: "avocado",
-    leftTitle: "Quả Bơ Tươi",
-    leftSubtitle: "Chất béo tốt",
+    leftTitle: "Quả bơ",
     leftImage: ASSETS.foodAvocado,
     rightTitle: "3.7",
-    rightSubtitle: "Khẩu phần tương đương",
+    rightUnit: "trái",
     rightIcon: "restaurant",
-    factTitle: "Quả Bơ Tươi & Sức Khỏe",
+    factTitle: "Quả bơ & Sức Khỏe",
     factText:
       "Bơ chứa chất béo không bão hòa đơn lành mạnh, nhưng bạn cần ăn đến 3.7 quả bơ chín mỗi ngày để đạt 100% nhu cầu Vitamin E!",
   },
   {
     id: "spinach",
     leftTitle: "Rau chân vịt",
-    leftSubtitle: "Chống oxy hoá",
     leftImage: ASSETS.foodSpinach,
     rightTitle: "9",
-    rightSubtitle: "Khẩu phần tương đương",
+    rightUnit: "Lá",
     rightIcon: "restaurant",
     factTitle: "Rau chân vịt (Rau bina)",
     factText:
@@ -219,10 +217,9 @@ export const MATCH_DATA: MatchPair[] = [
   {
     id: "strawberry",
     leftTitle: "Dâu tây",
-    leftSubtitle: "Khoáng chất cao",
     leftImage: ASSETS.foodStrawberries,
     rightTitle: "1.8",
-    rightSubtitle: "Khẩu phần tương đương",
+    rightUnit: "kg",
     rightIcon: "restaurant",
     factTitle: "Dâu tây thơm ngon",
     factText:
@@ -230,11 +227,10 @@ export const MATCH_DATA: MatchPair[] = [
   },
   {
     id: "almond_koka",
-    leftTitle: "Sữa Almond Koka",
-    leftSubtitle: "100% Vitamin E",
+    leftTitle: "Sữa Almond Koka 180ml",
     leftImage: ASSETS.almondKokaOriginal,
     rightTitle: "1",
-    rightSubtitle: "Khẩu phần tương đương",
+    rightUnit: "hộp",
     rightIcon: "restaurant",
     factTitle: "Sữa Almond Koka 180ml",
     factText:

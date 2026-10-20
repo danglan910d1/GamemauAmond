@@ -202,6 +202,7 @@ export default function App() {
               onClaimPrize={handleClaimPrize}
               onNavigate={navigateTo}
               selectedStore={selectedStore}
+              onSelectStore={(st) => setSelectedStore(st)}
             />
           )}
 

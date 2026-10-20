@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import confetti from "canvas-confetti";
-import { ScreenId, PRIZES, PrizeItem, ASSETS, StoreInfo } from "../types";
+import { ScreenId, PRIZES, PrizeItem, ASSETS, StoreInfo, DEFAULT_STORES } from "../types";
 import { APPS_SCRIPT_URL } from "../config";
 import { sound } from "../sound";
 import WheelCanvas from "./wheel/WheelCanvas";
@@ -13,15 +13,59 @@ interface LuckyWheelScreenProps {
   selectedStore?: StoreInfo | null;
 }
 
+const getCachedPrizes = (storeId: string): { list: PrizeItem[]; ready: boolean } => {
+  try {
+    const raw = localStorage.getItem(`almond_koka_stock_${storeId}`);
+    if (raw) {
+      const stockMap = JSON.parse(raw);
+      if (stockMap && typeof stockMap === "object") {
+        const list = PRIZES.map((p) => {
+          const rawVal = stockMap[String(p.id)] ?? stockMap[p.id];
+          const num = parseInt(String(rawVal), 10);
+          return {
+            ...p,
+            stock: isNaN(num) ? 0 : Math.max(0, num),
+          };
+        });
+        const hasStock = list.some((p) => p.stock > 0);
+        return { list, ready: hasStock };
+      }
+    }
+  } catch (e) {
+    console.warn("[LuckyWheel] Lỗi đọc cache tồn kho:", e);
+  }
+  return {
+    list: PRIZES.map((p) => ({ ...p, stock: 0 })),
+    ready: false,
+  };
+};
+
 export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
   onNavigate,
   onGoHome,
   selectedStore,
 }) => {
+  // Xác định đúng storeId: prop > localStorage > mặc định
+  const currentStoreId =
+    selectedStore?.id ||
+    (() => {
+      try {
+        const saved = localStorage.getItem("almond_koka_selected_store");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed?.id) return parsed.id;
+        }
+      } catch {}
+      return DEFAULT_STORES[0].id;
+    })();
+
+  const initialStockData = getCachedPrizes(currentStoreId);
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const [currentRotation, setCurrentRotation] = useState<number>(0);
   const [spinsAvailable, setSpinsAvailable] = useState<number>(1);
-  const [prizesList, setPrizesList] = useState<PrizeItem[]>(() => [...PRIZES]);
+  const [prizesList, setPrizesList] = useState<PrizeItem[]>(initialStockData.list);
+  const [isStockReady, setIsStockReady] = useState<boolean>(initialStockData.ready);
+
   const [wonPrize, setWonPrize] = useState<PrizeItem | null>(() => {
     if (typeof window !== "undefined") {
       if (window.location.hash === "#winner_ori") return PRIZES[1];
@@ -29,6 +73,7 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
     }
     return null;
   });
+
   const [showWinnerModal, setShowWinnerModal] = useState<boolean>(() => {
     return (
       typeof window !== "undefined" &&
@@ -42,46 +87,66 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
   // Nạp tồn kho realtime từ Google Sheets theo đúng cửa hàng đã chọn
   useEffect(() => {
     let mounted = true;
-    const storeId = selectedStore?.id || "STORE_HCM_01";
+    const storeId = currentStoreId;
 
-    fetch(
-      `${APPS_SCRIPT_URL}?action=getStock&storeId=${encodeURIComponent(storeId)}`
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        if (!mounted) return;
-        if (data && data.success && data.stock) {
-          console.log(
-            `[LuckyWheel] Đã đồng bộ tồn kho từ Google Sheet (${storeId}):`,
-            data.stock
-          );
-          setPrizesList((prev) =>
-            prev.map((p) => {
-              const liveQty = data.stock[String(p.id)];
-              return {
-                ...p,
-                stock:
-                  typeof liveQty === "number"
-                    ? liveQty
-                    : liveQty !== undefined
-                    ? parseInt(liveQty, 10) || 0
-                    : p.stock,
-              };
-            })
-          );
-        }
-      })
-      .catch((err) => {
-        console.warn(
-          "[LuckyWheel] Không thể kết nối Google Sheets để lấy tồn kho realtime, dùng tồn kho dự phòng:",
-          err
-        );
-      });
+    // Cập nhật lại từ cache nếu có
+    const cached = getCachedPrizes(storeId);
+    if (cached.ready) {
+      setPrizesList(cached.list);
+      setIsStockReady(true);
+    }
+
+    let retryCount = 0;
+    const fetchStock = () => {
+      fetch(
+        `${APPS_SCRIPT_URL}?action=getStock&storeId=${encodeURIComponent(storeId)}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (!mounted) return;
+          if (data && data.success && data.stock) {
+            console.log(
+              `[LuckyWheel] Đã đồng bộ tồn kho từ Google Sheet (${storeId}):`,
+              data.stock
+            );
+            try {
+              localStorage.setItem(
+                `almond_koka_stock_${storeId}`,
+                JSON.stringify(data.stock)
+              );
+            } catch {}
+
+            setPrizesList(
+              PRIZES.map((p) => {
+                const liveQty = data.stock[String(p.id)] ?? data.stock[p.id];
+                const qty = parseInt(String(liveQty), 10);
+                return {
+                  ...p,
+                  stock: isNaN(qty) ? 0 : Math.max(0, qty),
+                };
+              })
+            );
+            setIsStockReady(true);
+          } else if (retryCount < 2 && mounted) {
+            retryCount++;
+            setTimeout(fetchStock, 1500);
+          }
+        })
+        .catch((err) => {
+          console.warn("[LuckyWheel] Không thể kết nối Google Sheets để lấy tồn kho:", err);
+          if (retryCount < 2 && mounted) {
+            retryCount++;
+            setTimeout(fetchStock, 1500);
+          }
+        });
+    };
+
+    fetchStock();
 
     return () => {
       mounted = false;
     };
-  }, [selectedStore?.id]);
+  }, [currentStoreId]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [layout, setLayout] = useState<{
@@ -148,22 +213,22 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
     return () => ro.disconnect();
   }, []);
 
-  const pickWinningIndex = () => {
-    // Hỗ trợ QA test nhanh quay trúng Original 180ml bằng hash #force_ori
-    if (typeof window !== "undefined" && window.location.hash.includes("force_ori")) {
-      console.log("[LuckyWheel] Chế độ QA test: Ép trúng Almond Koka Original 180ml");
+  const pickWinningIndex = (): number => {
+    // Chỉ ép khi chạy ở chế độ dev có hash #force_ori
+    if (import.meta.env.DEV && typeof window !== "undefined" && window.location.hash.includes("force_ori")) {
+      console.log("[LuckyWheel] Chế độ DEV test: Ép trúng Almond Koka Original 180ml");
       return 1;
     }
 
     // 1. Chỉ lọc các món CÒN TỒN KHO TRÊN GOOGLE SHEETS (stock > 0)
     const availablePrizes = prizesList
       .map((p, idx) => ({ ...p, originalIndex: idx }))
-      .filter((p) => p.stock > 0);
+      .filter((p) => typeof p.stock === "number" && p.stock > 0);
 
-    // Nếu tất cả các món đều hết tồn kho (0), fallback quay ngẫu nhiên
+    // Nếu tất cả các món đều hết tồn kho (<= 0), tuyệt đối không quay ra món hết hàng
     if (availablePrizes.length === 0) {
-      console.warn("[LuckyWheel] Tất cả phần thưởng trên Sheet đều có tồn kho = 0!");
-      return Math.floor(Math.random() * prizesList.length);
+      console.warn("[LuckyWheel] Không có phần quà nào còn tồn kho > 0!");
+      return -1;
     }
 
     const totalAvailableStock = availablePrizes.reduce(
@@ -171,10 +236,15 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
       0
     );
 
+    if (totalAvailableStock <= 0) {
+      console.warn("[LuckyWheel] Tổng tồn kho khả dụng <= 0!");
+      return -1;
+    }
+
     // 2. Thuật toán Weighted Random: Tỷ lệ trúng tỷ lệ thuận chính xác theo tồn kho của Sheet
     // Món nào nhiều tồn kho -> tỷ lệ trúng cao.
     // Món nào ít tồn kho -> hiếm ra.
-    // Món nào hết hàng (0) -> xác suất 0%.
+    // Món nào hết hàng (stock = 0) -> xác suất 0%, không bao giờ trúng.
     const random = Math.random();
     let accum = 0;
     for (let i = 0; i < availablePrizes.length; i++) {
@@ -188,12 +258,18 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
   };
 
   const handleSpin = () => {
-    // Chặn tuyệt đối quay 2 lần do double-click hoặc sự kiện bubbling
-    if (isSpinningRef.current || isSpinning || spinsAvailable <= 0) return;
+    // Chặn tuyệt đối nếu chưa tải xong tồn kho hoặc đang quay hoặc hết lượt
+    if (!isStockReady || isSpinningRef.current || isSpinning || spinsAvailable <= 0) return;
+
+    const winningIndex = pickWinningIndex();
+    if (winningIndex < 0 || !prizesList[winningIndex]) {
+      console.warn("[LuckyWheel] Không có phần quà hợp lệ để quay!");
+      return;
+    }
+
     isSpinningRef.current = true;
     setIsSpinning(true);
 
-    const winningIndex = pickWinningIndex();
     const winning = prizesList[winningIndex];
 
     const sliceCount = prizesList.length;
@@ -219,14 +295,22 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
       setSpinsAvailable((prev) => Math.max(0, prev - 1));
       setWonPrize(winning);
 
-      // Giảm tồn kho ngay tại local state để vòng quay đồng bộ tức thì
-      setPrizesList((prev) =>
-        prev.map((p, idx) =>
+      // Giảm tồn kho ngay tại local state & lưu lại vào localStorage
+      setPrizesList((prev) => {
+        const next = prev.map((p, idx) =>
           idx === winningIndex
             ? { ...p, stock: Math.max(0, p.stock - 1) }
             : p
-        )
-      );
+        );
+        try {
+          const stockMap: Record<string, number> = {};
+          next.forEach((p) => {
+            stockMap[String(p.id)] = p.stock;
+          });
+          localStorage.setItem(`almond_koka_stock_${currentStoreId}`, JSON.stringify(stockMap));
+        } catch {}
+        return next;
+      });
 
       confetti({
         particleCount: 90,
@@ -236,13 +320,12 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
       sound.playWin();
 
       // Gửi API ghi nhận kết quả và TRỪ TỒN KHO trên Google Sheets (chỉ 1 lần duy nhất)
-      const storeIdToRecord = selectedStore?.id || 'STORE_HCM_01';
       fetch(APPS_SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({
           action: 'submitResult',
-          storeId: storeIdToRecord,
+          storeId: currentStoreId,
           giftId: String(winning.id),
           giftName: winning.name,
         }),
@@ -310,8 +393,8 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
       {/* 
         2. VÒNG QUAY MAY MẮN:
         - Bự hơn, ôm trọn từ dưới cổ bạn nam xuống sát mép đường cong "Cả Nhà Cùng Yêu"
-        - Không bao giờ đè lên chữ Slogan hay Ribbon
-        - Nhấn bất kỳ vị trí nào trên vòng quay là quay
+        - Giữ nguyên toàn bộ 10 nan quạt trên vòng quay
+        - Chỉ kích hoạt quay khi đã sẵn sàng dữ liệu kho
       */}
       <div
         className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center"
@@ -323,9 +406,18 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
           size={layout.wheelSize}
           currentRotation={currentRotation}
           isSpinning={isSpinning}
+          isReady={isStockReady}
           onSpin={handleSpin}
         />
       </div>
+
+      {/* Thông báo trạng thái đồng bộ tồn kho (nếu mạng chậm chưa tải xong) */}
+      {!isStockReady && (
+        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-3.5 py-1.5 bg-amber-950/85 backdrop-blur-sm text-amber-100 text-[11px] font-semibold rounded-full shadow-lg border border-amber-500/30 whitespace-nowrap">
+          <div className="w-3 h-3 border-2 border-amber-300 border-t-transparent rounded-full animate-spin" />
+          <span>Đang đồng bộ kho quà tặng...</span>
+        </div>
+      )}
 
       {/* Winner Modal */}
       <WinnerModal

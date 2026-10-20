@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ScreenId, PrizeItem, PRIZES, ASSETS, StoreInfo, DEFAULT_STORES } from './types';
+import { APPS_SCRIPT_URL } from './config';
 import { sound } from './sound';
 import { preloadScreenAssets, preloadAllAppAssets } from './utils/assetLoader';
 import { Header } from './components/Header';
@@ -24,7 +25,13 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenId>(getInitialScreen);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [wonPrize, setWonPrize] = useState<PrizeItem | null>(PRIZES[0]);
-  const [selectedStore, setSelectedStore] = useState<StoreInfo | null>(DEFAULT_STORES[0]);
+  const [selectedStore, setSelectedStore] = useState<StoreInfo | null>(() => {
+    try {
+      const saved = localStorage.getItem('almond_koka_selected_store');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return DEFAULT_STORES[0];
+  });
   const [isLoadingScreen, setIsLoadingScreen] = useState<boolean>(true);
 
   // Khởi động: Nạp trước tài nguyên màn hình ban đầu + nạp nền toàn bộ game
@@ -38,6 +45,20 @@ export default function App() {
 
     // Nạp trước ngầm toàn bộ hình ảnh các màn hình tiếp theo
     preloadAllAppAssets();
+
+    // Nạp trước tồn kho từ Google Sheets cho cả 2 khu vực vào localStorage
+    DEFAULT_STORES.forEach((st) => {
+      fetch(`${APPS_SCRIPT_URL}?action=getStock&storeId=${encodeURIComponent(st.id)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.success && data.stock) {
+            try {
+              localStorage.setItem('almond_koka_stock_' + st.id, JSON.stringify(data.stock));
+            } catch {}
+          }
+        })
+        .catch(() => {});
+    });
 
     return () => {
       mounted = false;
@@ -75,11 +96,34 @@ export default function App() {
     navigateTo('game2');
   };
 
-  const handleToWheel = (store?: StoreInfo) => {
+  const handleToWheel = async (store?: StoreInfo) => {
+    const targetStore = store || selectedStore || DEFAULT_STORES[0];
     if (store) {
       setSelectedStore(store);
+      try {
+        localStorage.setItem('almond_koka_selected_store', JSON.stringify(store));
+      } catch {}
     }
-    navigateTo('wheel');
+    setIsLoadingScreen(true);
+    try {
+      const assetPromise = preloadScreenAssets('wheel');
+      const stockPromise = fetch(
+        `${APPS_SCRIPT_URL}?action=getStock&storeId=${encodeURIComponent(targetStore.id)}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.success && data.stock) {
+            try {
+              localStorage.setItem('almond_koka_stock_' + targetStore.id, JSON.stringify(data.stock));
+            } catch {}
+          }
+        })
+        .catch((err) => console.warn('[App] Lỗi tải tồn kho:', err));
+
+      await Promise.all([assetPromise, stockPromise]);
+    } catch {}
+    setCurrentScreen('wheel');
+    setIsLoadingScreen(false);
   };
 
   const handleClaimPrize = (prize: PrizeItem) => {

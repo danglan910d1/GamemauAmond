@@ -7,6 +7,7 @@ export interface WheelCanvasProps {
   isSpinning: boolean;
   onSpin: () => void;
   size?: number; // Đường kính linh hoạt (px), tự động thu phóng theo màn hình
+  isReady?: boolean;
 }
 
 export const WheelCanvas: React.FC<WheelCanvasProps> = ({
@@ -14,6 +15,7 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
   isSpinning,
   onSpin,
   size = 316,
+  isReady = true,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const loadedImagesRef = useRef<{ [key: number]: HTMLImageElement }>({});
@@ -250,19 +252,19 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
         tabIndex={0}
         aria-label="Nhấn để quay thưởng Almond Koka"
         onClick={(e) => {
-          if (!isSpinning) {
+          if (!isSpinning && isReady) {
             onSpin();
           }
         }}
         onKeyDown={(e) => {
-          if ((e.key === 'Enter' || e.key === ' ') && !isSpinning) {
+          if ((e.key === 'Enter' || e.key === ' ') && !isSpinning && isReady) {
             e.preventDefault();
             onSpin();
           }
         }}
         style={{ width: wheelSize, height: wheelSize }}
         className={`relative rounded-full p-2 bg-gradient-to-b from-[#fef08a] via-[#d97706] to-[#78350f] shadow-[0_10px_30px_-5px_rgba(74,29,15,0.45),inset_0_2px_5px_rgba(255,255,255,0.7)] flex items-center justify-center border-2 border-[#fef08a] transition-all select-none ${
-          isSpinning ? 'cursor-not-allowed opacity-95' : 'cursor-pointer hover:brightness-105 active:scale-95'
+          isSpinning || !isReady ? 'cursor-not-allowed opacity-95' : 'cursor-pointer hover:brightness-105 active:scale-95'
         }`}
       >
         {/* 24 Bóng đèn LED ngọc trai phát sáng chớp chớp luân phiên (Casino Carnival Style) */}
@@ -351,25 +353,33 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
           <button
             type="button"
             aria-label="Quay thưởng Almond Koka"
-            disabled={isSpinning}
+            disabled={isSpinning || !isReady}
             onClick={(e) => {
               e.stopPropagation();
-              if (!isSpinning) {
-                onSpin();
-              }
+              if (!isSpinning && isReady) {
+            onSpin();
+          }
             }}
             style={{ width: hubSize, height: hubSize }}
             className={`rounded-full bg-gradient-to-b from-white via-[#fffdfa] to-[#fbf1e6] flex flex-col items-center justify-center p-2 shadow-[0_8px_24px_rgba(74,29,15,0.45),inset_0_2px_5px_rgba(255,255,255,1)] border-[3.5px] border-[#d97706] active:scale-95 transition-all group focus:outline-none cursor-pointer hover:brightness-105 ${
-              isSpinning ? 'opacity-90 cursor-not-allowed' : 'animate-pulseSlow'
+              isSpinning || !isReady ? 'opacity-90 cursor-not-allowed' : 'cursor-pointer hover:brightness-105 animate-pulseSlow'
             }`}
           >
             {/* Vòng viền vàng chỉ mỏng bên trong */}
-            <div className="w-full h-full rounded-full border-2 border-amber-300/80 p-1 flex items-center justify-center bg-white shadow-inner">
+            <div className="w-full h-full rounded-full border-2 border-amber-300/80 p-1 flex items-center justify-center bg-white shadow-inner relative">
               <img
                 src={ASSETS.almondKokaLogo}
                 alt="Almond Koka"
-                className="w-full h-full object-contain filter drop-shadow-sm scale-110"
+                className={`w-full h-full object-contain filter drop-shadow-sm scale-110 transition-opacity ${
+                  !isReady ? 'opacity-30' : 'opacity-100'
+                }`}
               />
+              {!isReady && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 rounded-full">
+                  <div className="w-5 h-5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-[7.5px] font-bold text-amber-800 mt-0.5 uppercase tracking-tight">Tải kho...</span>
+                </div>
+              )}
             </div>
           </button>
         </div>

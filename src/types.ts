@@ -366,3 +366,22 @@ export const PRIZES: PrizeItem[] = [
     boxBg: "#d97706",
   },
 ];
+
+/**
+ * Kho dự phòng an toàn tuyệt đối (Emergency Safe Stock)
+ * CHỈ kích hoạt khi Sheet chưa nhập kho hoặc mất kết nối mạng.
+ * ĐẶC BIỆT: Khóa 100% 2 món Sữa 180ml (stock = 0) để không bao giờ bị phát quà thiếu sữa.
+ * Chỉ cho phép quay trúng các món Bánh/Snack dồi dào (Mã 3 đến 10).
+ */
+export const EMERGENCY_SAFE_STOCK: Record<string, number> = {
+  "1": 0,  // Almond Koka Unsweetened 180ml -> 0% (Khóa an toàn)
+  "2": 0,  // Almond Koka Original 180ml -> 0% (Khóa an toàn)
+  "3": 50, // Pretz Nori Seaweed
+  "4": 50, // Pretz Truffle Cheese
+  "5": 30, // Pocky Chocolate 40g
+  "6": 30, // Pocky Cookies & Cream 40g
+  "7": 30, // Pocky Strawberry 39g
+  "8": 20, // Pocky Milky Matcha 40g
+  "9": 20, // Pejoy Belgian Chocolate
+  "10": 20 // Pejoy Madagascar Vanilla Cream
+};

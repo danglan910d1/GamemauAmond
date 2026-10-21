@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import confetti from "canvas-confetti";
-import { ScreenId, PRIZES, PrizeItem, ASSETS, StoreInfo, DEFAULT_STORES } from "../types";
+import {
+  ScreenId,
+  PRIZES,
+  PrizeItem,
+  ASSETS,
+  StoreInfo,
+  DEFAULT_STORES,
+  EMERGENCY_SAFE_STOCK,
+} from "../types";
 import { APPS_SCRIPT_URL } from "../config";
 import { sound } from "../sound";
 import WheelCanvas from "./wheel/WheelCanvas";
@@ -15,31 +23,61 @@ interface LuckyWheelScreenProps {
   onSelectStore?: (store: StoreInfo) => void;
 }
 
-const getCachedPrizes = (storeId: string): { list: PrizeItem[]; ready: boolean } => {
+/**
+ * Xử lý dữ liệu tồn kho thông minh:
+ * 1. Nếu Sheet có dữ liệu tồn kho thực tế (tổng stock > 0):
+ *    -> DÙNG 100% DỮ LIỆU TỪ SHEET (món nào = 0 thì 0% trúng).
+ * 2. Nếu Sheet chưa nhập kho (tất cả 10 món đều = 0) hoặc chưa kết nối:
+ *    -> KÍCH HOẠT KHO DỰ PHÒNG AN TOÀN (EMERGENCY_SAFE_STOCK):
+ *       - Khóa 100% 2 loại Sữa 180ml (stock = 0).
+ *       - Cung cấp sẵn các món Snack/Bánh để vòng quay không bị gián đoạn.
+ */
+const resolveStockMap = (
+  rawMap: Record<string, any> | null | undefined
+): { list: PrizeItem[]; isUsingFallback: boolean } => {
+  if (rawMap && typeof rawMap === "object") {
+    const list = PRIZES.map((p) => {
+      const rawVal = rawMap[String(p.id)] ?? rawMap[p.id];
+      const num = parseInt(String(rawVal), 10);
+      return {
+        ...p,
+        stock: isNaN(num) ? 0 : Math.max(0, num),
+      };
+    });
+
+    const hasLiveStock = list.some((p) => p.stock > 0);
+    if (hasLiveStock) {
+      return { list, isUsingFallback: false };
+    }
+  }
+
+  // Kích hoạt kho dự phòng khẩn cấp (Snack ONLY, 0% sữa 180ml)
+  const fallbackList = PRIZES.map((p) => {
+    const safeQty = EMERGENCY_SAFE_STOCK[String(p.id)] ?? 0;
+    return {
+      ...p,
+      stock: safeQty,
+    };
+  });
+
+  return { list: fallbackList, isUsingFallback: true };
+};
+
+const getCachedPrizes = (
+  storeId: string
+): { list: PrizeItem[]; isUsingFallback: boolean; isCached: boolean } => {
   try {
     const raw = localStorage.getItem(`almond_koka_stock_${storeId}`);
     if (raw) {
       const stockMap = JSON.parse(raw);
-      if (stockMap && typeof stockMap === "object") {
-        const list = PRIZES.map((p) => {
-          const rawVal = stockMap[String(p.id)] ?? stockMap[p.id];
-          const num = parseInt(String(rawVal), 10);
-          return {
-            ...p,
-            stock: isNaN(num) ? 0 : Math.max(0, num),
-          };
-        });
-        const hasStock = list.some((p) => p.stock > 0);
-        return { list, ready: hasStock };
-      }
+      const res = resolveStockMap(stockMap);
+      return { ...res, isCached: true };
     }
   } catch (e) {
     console.warn("[LuckyWheel] Lỗi đọc cache tồn kho:", e);
   }
-  return {
-    list: PRIZES.map((p) => ({ ...p, stock: 0 })),
-    ready: false,
-  };
+  const fallbackRes = resolveStockMap(null);
+  return { ...fallbackRes, isCached: false };
 };
 
 export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
@@ -70,22 +108,17 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
   const currentStoreId = activeStore.id;
   const currentStoreName = activeStore.name;
 
-  const initialStockData = getCachedPrizes(currentStoreId);
+  const initialStockData = useRef(getCachedPrizes(currentStoreId)).current;
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const [currentRotation, setCurrentRotation] = useState<number>(0);
   const [spinsAvailable, setSpinsAvailable] = useState<number>(1);
   const [prizesList, setPrizesList] = useState<PrizeItem[]>(initialStockData.list);
-  const [isStockReady, setIsStockReady] = useState<boolean>(initialStockData.ready);
+  const [isStockReady, setIsStockReady] = useState<boolean>(true);
+  const [isUsingFallback, setIsUsingFallback] = useState<boolean>(initialStockData.isUsingFallback);
   const [showStoreModal, setShowStoreModal] = useState<boolean>(false);
+  const [showInspectorModal, setShowInspectorModal] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-
-  // Tính tổng tồn kho khả dụng hiện tại của cửa hàng
-  const totalAvailableStock = prizesList.reduce(
-    (sum, p) => sum + (typeof p.stock === "number" && p.stock > 0 ? p.stock : 0),
-    0
-  );
-  // Cửa hàng chưa nhập kho hoặc đã hết sạch toàn bộ quà
-  const isOutOfStock = isStockReady && totalAvailableStock <= 0;
+  const [lastSyncTime, setLastSyncTime] = useState<string>("Vừa cập nhật");
 
   const [wonPrize, setWonPrize] = useState<PrizeItem | null>(() => {
     if (typeof window !== "undefined") {
@@ -110,14 +143,6 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
     let mounted = true;
     const storeId = currentStoreId;
 
-    // Cập nhật lại từ cache nếu có
-    const cached = getCachedPrizes(storeId);
-    if (cached.ready) {
-      setPrizesList(cached.list);
-      setIsStockReady(true);
-    }
-
-    let retryCount = 0;
     const fetchStock = () => {
       fetch(
         `${APPS_SCRIPT_URL}?action=getStock&storeId=${encodeURIComponent(storeId)}`
@@ -130,35 +155,31 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
               `[LuckyWheel] Đã đồng bộ tồn kho từ Google Sheet (${storeId}):`,
               data.stock
             );
-            try {
-              localStorage.setItem(
-                `almond_koka_stock_${storeId}`,
-                JSON.stringify(data.stock)
-              );
-            } catch {}
+            const resolved = resolveStockMap(data.stock);
+            // Chỉ lưu cache khi Sheet có số liệu thực
+            if (!resolved.isUsingFallback) {
+              try {
+                localStorage.setItem(
+                  `almond_koka_stock_${storeId}`,
+                  JSON.stringify(data.stock)
+                );
+              } catch {}
+            }
 
-            setPrizesList(
-              PRIZES.map((p) => {
-                const liveQty = data.stock[String(p.id)] ?? data.stock[p.id];
-                const qty = parseInt(String(liveQty), 10);
-                return {
-                  ...p,
-                  stock: isNaN(qty) ? 0 : Math.max(0, qty),
-                };
+            setPrizesList(resolved.list);
+            setIsUsingFallback(resolved.isUsingFallback);
+            setIsStockReady(true);
+            setLastSyncTime(
+              new Date().toLocaleTimeString("vi-VN", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
               })
             );
-            setIsStockReady(true);
-          } else if (retryCount < 2 && mounted) {
-            retryCount++;
-            setTimeout(fetchStock, 1500);
           }
         })
         .catch((err) => {
-          console.warn("[LuckyWheel] Không thể kết nối Google Sheets để lấy tồn kho:", err);
-          if (retryCount < 2 && mounted) {
-            retryCount++;
-            setTimeout(fetchStock, 1500);
-          }
+          console.warn("[LuckyWheel] Lỗi tải tồn kho:", err);
         });
     };
 
@@ -179,24 +200,26 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
       .then((data) => {
         setIsRefreshing(false);
         if (data && data.success && data.stock) {
-          try {
-            localStorage.setItem(
-              `almond_koka_stock_${currentStoreId}`,
-              JSON.stringify(data.stock)
-            );
-          } catch {}
+          const resolved = resolveStockMap(data.stock);
+          if (!resolved.isUsingFallback) {
+            try {
+              localStorage.setItem(
+                `almond_koka_stock_${currentStoreId}`,
+                JSON.stringify(data.stock)
+              );
+            } catch {}
+          }
 
-          setPrizesList(
-            PRIZES.map((p) => {
-              const liveQty = data.stock[String(p.id)] ?? data.stock[p.id];
-              const qty = parseInt(String(liveQty), 10);
-              return {
-                ...p,
-                stock: isNaN(qty) ? 0 : Math.max(0, qty),
-              };
+          setPrizesList(resolved.list);
+          setIsUsingFallback(resolved.isUsingFallback);
+          setIsStockReady(true);
+          setLastSyncTime(
+            new Date().toLocaleTimeString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
             })
           );
-          setIsStockReady(true);
         }
       })
       .catch((err) => {
@@ -216,7 +239,8 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
     }
     const cached = getCachedPrizes(store.id);
     setPrizesList(cached.list);
-    setIsStockReady(cached.ready);
+    setIsUsingFallback(cached.isUsingFallback);
+    setIsStockReady(true);
   };
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -291,7 +315,7 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
       return 1;
     }
 
-    // 1. Chỉ lọc các món CÒN TỒN KHO TRÊN GOOGLE SHEETS (stock > 0)
+    // 1. Chỉ lọc các món CÒN TỒN KHO (stock > 0)
     const availablePrizes = prizesList
       .map((p, idx) => ({ ...p, originalIndex: idx }))
       .filter((p) => typeof p.stock === "number" && p.stock > 0);
@@ -312,7 +336,7 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
       return -1;
     }
 
-    // 2. Thuật toán Weighted Random: Tỷ lệ trúng tỷ lệ thuận chính xác theo tồn kho của Sheet
+    // 2. Thuật toán Weighted Random: Tỷ lệ trúng tỷ lệ thuận chính xác theo tồn kho thực tế
     // Món nào nhiều tồn kho -> tỷ lệ trúng cao.
     // Món nào ít tồn kho -> hiếm ra.
     // Món nào hết hàng (stock = 0) -> xác suất 0%, không bao giờ trúng.
@@ -329,8 +353,8 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
   };
 
   const handleSpin = () => {
-    // Chặn tuyệt đối nếu chưa tải xong tồn kho, hoặc cửa hàng chưa có kho, hoặc đang quay, hoặc hết lượt
-    if (!isStockReady || isOutOfStock || isSpinningRef.current || isSpinning || spinsAvailable <= 0) return;
+    // Chặn tuyệt đối nếu đang quay hoặc hết lượt
+    if (!isStockReady || isSpinningRef.current || isSpinning || spinsAvailable <= 0) return;
 
     const winningIndex = pickWinningIndex();
     if (winningIndex < 0 || !prizesList[winningIndex]) {
@@ -439,6 +463,29 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
       }}
     >
       {/* 
+        Huy hiệu trạng thái kho hàng góc trên phải (cho PG/Admin dễ dàng quan sát & kiểm tra)
+      */}
+      <div className="absolute top-2.5 right-2.5 z-30 flex items-center">
+        <button
+          type="button"
+          onClick={() => {
+            sound.playClick();
+            setShowInspectorModal(true);
+          }}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold shadow-md border transition-all cursor-pointer backdrop-blur-md ${
+            isUsingFallback
+              ? "bg-amber-600/90 text-white border-amber-300 animate-pulse"
+              : "bg-emerald-700/90 text-white border-emerald-300 hover:brightness-110"
+          }`}
+          title="Bấm để kiểm tra chi tiết tồn kho & làm mới"
+        >
+          <span className="w-2 h-2 rounded-full bg-white" />
+          <span>{isUsingFallback ? "Kho Dự Phòng" : "Kho Sheet"}</span>
+          <span className="material-symbols-outlined text-[14px]">tune</span>
+        </button>
+      </div>
+
+      {/* 
         1. CHIP "QUAY LÀ TRÚNG":
         - Luôn nằm ngay dưới dòng chữ "Sống thanh xuân từ bên trong"
         - Tự động co giãn theo tỉ lệ background
@@ -465,7 +512,6 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
         2. VÒNG QUAY MAY MẮN:
         - Bự hơn, ôm trọn từ dưới cổ bạn nam xuống sát mép đường cong "Cả Nhà Cùng Yêu"
         - Giữ nguyên toàn bộ 10 nan quạt trên vòng quay
-        - Chỉ kích hoạt quay khi đã sẵn sàng dữ liệu kho & kho còn quà
       */}
       <div
         className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center"
@@ -478,52 +524,122 @@ export const LuckyWheelScreen: React.FC<LuckyWheelScreenProps> = ({
           currentRotation={currentRotation}
           isSpinning={isSpinning}
           isReady={isStockReady}
-          isOutOfStock={isOutOfStock}
+          isOutOfStock={false}
           onSpin={handleSpin}
         />
       </div>
 
-      {/* Cảnh báo khi cửa hàng CHƯA NHẬP KHO hoặc ĐÃ HẾT QUÀ */}
-      {isOutOfStock && (
-        <div className="absolute bottom-4 left-4 right-4 z-30 bg-[#3b1204]/95 backdrop-blur-md text-white p-3 sm:p-3.5 rounded-2xl shadow-2xl border-2 border-amber-500/80 flex flex-col items-center text-center animate-fadeIn">
-          <div className="flex items-center gap-1.5 text-amber-300 font-extrabold text-[13px] mb-1">
-            <span className="material-symbols-outlined text-[18px]">inventory_2</span>
-            <span>CHƯA CÓ KHO QUÀ TẶNG</span>
-          </div>
-          <p className="text-[12px] text-amber-100/90 leading-snug mb-2.5">
-            Chi nhánh <span className="font-bold text-white underline">{currentStoreName}</span> hiện chưa có dữ liệu tồn kho.
-          </p>
-          <div className="flex items-center gap-2 w-full">
-            <button
-              type="button"
-              onClick={() => {
-                sound.playClick();
-                setShowStoreModal(true);
-              }}
-              className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold text-[12px] shadow hover:brightness-110 active:scale-95 transition-all cursor-pointer"
-            >
-              Đổi Cửa Hàng
-            </button>
-            <button
-              type="button"
-              disabled={isRefreshing}
-              onClick={handleRefreshStock}
-              className="py-2 px-3 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-[12px] flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-            >
-              <span className={`material-symbols-outlined text-[15px] ${isRefreshing ? "animate-spin" : ""}`}>
-                refresh
-              </span>
-              <span>{isRefreshing ? "Đang tải..." : "Tải Lại"}</span>
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Modal kiểm tra tồn kho trực tiếp (Stock Inspector) */}
+      {showInspectorModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-[#1e0a04]/80 backdrop-blur-sm flex items-center justify-center p-3 animate-fadeIn"
+        >
+          <div className="w-full max-w-[360px] bg-[#fffdfa] rounded-3xl p-4 sm:p-5 border-2 border-amber-400 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-scaleUp">
+            {/* Header Modal */}
+            <div className="flex items-center justify-between pb-2 border-b border-[#ebdccd]">
+              <div className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-amber-700 text-[20px]">
+                  inventory
+                </span>
+                <h3 className="font-extrabold text-[15px] text-[#4a1d0f]">
+                  Kiểm Tra Kho Quà Tặng
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowInspectorModal(false)}
+                className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
 
-      {/* Thông báo trạng thái đồng bộ tồn kho (nếu mạng chậm chưa tải xong) */}
-      {!isStockReady && (
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-3.5 py-1.5 bg-amber-950/85 backdrop-blur-sm text-amber-100 text-[11px] font-semibold rounded-full shadow-lg border border-amber-500/30 whitespace-nowrap">
-          <div className="w-3 h-3 border-2 border-amber-300 border-t-transparent rounded-full animate-spin" />
-          <span>Đang đồng bộ kho quà tặng...</span>
+            {/* Thông tin Cửa Hàng & Trạng Thái Đồng Bộ */}
+            <div className="my-2.5 p-2.5 rounded-xl bg-[#fef3c7]/60 border border-[#fde68a] text-[12px] space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-amber-900 font-medium">Chi nhánh:</span>
+                <span className="font-extrabold text-amber-950">{currentStoreName}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-amber-900 font-medium">Trạng thái:</span>
+                <span
+                  className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${
+                    isUsingFallback
+                      ? "bg-amber-500 text-white"
+                      : "bg-emerald-600 text-white"
+                  }`}
+                >
+                  {isUsingFallback ? "Kho Dự Phòng (Chưa nhập Sheet)" : "Đồng bộ 100% Google Sheet"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-amber-800/80">
+                <span>Cập nhật lúc:</span>
+                <span>{lastSyncTime}</span>
+              </div>
+            </div>
+
+            {/* Danh sách 10 món quà và số lượng còn lại */}
+            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 max-h-[220px]">
+              {prizesList.map((p) => {
+                const isOutOfStock = p.stock <= 0;
+                return (
+                  <div
+                    key={p.id}
+                    className={`flex items-center justify-between p-2 rounded-lg text-[12px] border ${
+                      isOutOfStock
+                        ? "bg-red-50/70 border-red-200 text-red-700"
+                        : "bg-white border-amber-200/80 text-amber-950 font-medium"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0 pr-2">
+                      <span className="font-bold text-[11px] text-gray-500 w-4">
+                        #{p.id}
+                      </span>
+                      <span className="truncate">{p.name}</span>
+                    </div>
+                    <div className="shrink-0 flex items-center gap-1">
+                      <span
+                        className={`font-black text-[12px] px-2 py-0.5 rounded-full ${
+                          isOutOfStock
+                            ? "bg-red-200 text-red-800"
+                            : "bg-amber-100 text-amber-900"
+                        }`}
+                      >
+                        {isOutOfStock ? "0 (Hết)" : `${p.stock} cái`}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Các nút hành động */}
+            <div className="pt-3 mt-2 border-t border-[#ebdccd] flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowInspectorModal(false);
+                  setShowStoreModal(true);
+                }}
+                className="flex-1 py-2 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#4a1d0f] font-bold text-[12px] transition-all cursor-pointer text-center"
+              >
+                Đổi Cửa Hàng
+              </button>
+              <button
+                type="button"
+                disabled={isRefreshing}
+                onClick={handleRefreshStock}
+                className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-white font-bold text-[12px] flex items-center justify-center gap-1.5 shadow transition-all cursor-pointer disabled:opacity-50"
+              >
+                <span className={`material-symbols-outlined text-[15px] ${isRefreshing ? "animate-spin" : ""}`}>
+                  refresh
+                </span>
+                <span>{isRefreshing ? "Đang tải..." : "Tải Lại Sheet"}</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -39,29 +39,29 @@ export const ITEM_SIZE = 50;
 
 /**
  * 1. TỈ LỆ XUẤT HIỆN CHƯỚNG NGẠI VẬT (0.0 đến 1.0)
- * - HAZARD_RATIO_START: Lúc mới vào (0-1 giọt): 0.35 (35% chướng ngại vật, tạo thử thách né tránh)
- * - HAZARD_RATIO_MAX: Khi sắp đầy ly: 0.50 (50% chướng ngại vật, tạo kịch tính chặng cuối)
- * - HAZARD_RATIO: Mặc định (0.42)
+ * - HAZARD_RATIO_START: Lúc mới vào (0-1 giọt): 0.18 (18% chướng ngại vật, tạo trải nghiệm dễ chịu)
+ * - HAZARD_RATIO_MAX: Khi sắp đầy ly: 0.25 (25% chướng ngại vật)
+ * - HAZARD_RATIO: Mặc định (0.20)
  */
-export const HAZARD_RATIO_START = 0.35;
-export const HAZARD_RATIO_MAX = 0.5;
-export const HAZARD_RATIO = 0.42;
+export const HAZARD_RATIO_START = 0.18;
+export const HAZARD_RATIO_MAX = 0.25;
+export const HAZARD_RATIO = 0.20;
 
 /**
  * 2. KHOẢNG CÁCH THỜI GIAN GIỮA CÁC ĐỢT RƠI (ms) - Số CÀNG NHỎ thì rơi CÀNG DỒN DẬP
- * - SPAWN_INTERVAL_START: Lúc mới bắt đầu chơi (520ms -> nhịp độ nhanh vừa, cuốn hút)
- * - SPAWN_INTERVAL_MIN: Lúc gần thắng (360ms -> nhịp độ kịch tính, hấp dẫn)
+ * - SPAWN_INTERVAL_START: Lúc mới bắt đầu chơi (750ms -> nhịp độ thong thả, dễ hứng)
+ * - SPAWN_INTERVAL_MIN: Lúc gần thắng (550ms -> vừa phải, không dồn dập)
  */
-export const SPAWN_INTERVAL_START = 520;
-export const SPAWN_INTERVAL_MIN = 360;
+export const SPAWN_INTERVAL_START = 750;
+export const SPAWN_INTERVAL_MIN = 550;
 
 /**
  * 3. TỐC ĐỘ RƠI CỦA VẬT THỂ (px / frame @60fps) - Số CÀNG LỚN thì rơi CÀNG NHANH
- * - BASE_SPEED: Tốc độ rơi ban đầu (2.6 px/frame -> nhanh và mượt mà hơn, đúng nhịp chơi)
- * - SPEED_STEP: Gia tốc tăng thêm mỗi khi hứng 1 giọt (+0.15 px/frame -> tốc độ tăng từ từ và đều đặn)
+ * - BASE_SPEED: Tốc độ rơi ban đầu (1.8 px/frame -> rơi chậm rãi, dễ quan sát và điều khiển)
+ * - SPEED_STEP: Gia tốc tăng thêm mỗi khi hứng 1 giọt (+0.05 px/frame -> tăng rất nhẹ nhàng)
  */
-export const BASE_SPEED = 2.8;
-export const SPEED_STEP = 0.1;
+export const BASE_SPEED = 1.8;
+export const SPEED_STEP = 0.05;
 
 export interface SpriteDef {
   src: string;
